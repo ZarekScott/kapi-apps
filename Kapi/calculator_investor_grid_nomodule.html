@@ -1,0 +1,484 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Kapi — Deal Calculator (Modern)</title>
+  <style>
+    :root{
+      --bg:#0b1220;
+      --panel:#0f172a;
+      --panel-2:#0c1427;
+      --text:#e5e7eb;
+      --muted:#94a3b8;
+      --border:#1e2a43;
+      --good:#10b981;
+      --bad:#ef4444;
+      --accent:#22d3ee; /* default neon: cyan */
+      --accent-weak: rgba(34,211,238,.25);
+      --shadow: 0 0 1px var(--accent), 0 0 8px var(--accent), 0 0 16px var(--accent);
+    }
+    [data-theme="light"]{
+      --bg:#f7fafc;
+      --panel:#ffffff;
+      --panel-2:#f3f4f6;
+      --text:#0f172a;
+      --muted:#334155;
+      --border:#e5e7eb;
+      --shadow: 0 0 0px var(--accent), 0 0 8px var(--accent), 0 0 18px var(--accent);
+    }
+    *{box-sizing:border-box}
+    body{margin:0;background:var(--bg);color:var(--text);font-family:Inter,system-ui,-apple-system,Segoe UI,Roboto,Helvetica,Arial,sans-serif;}
+    .wrap{max-width:1200px;margin:0 auto;padding:20px}
+    header{display:flex;align-items:center;justify-content:space-between;padding:10px 0 16px 0}
+    .brand{display:flex;align-items:center;gap:12px}
+    .k{width:40px;height:40px;border-radius:12px;background:conic-gradient(from 180deg at 50% 50%, var(--accent), transparent 60%);
+       border:1px solid var(--accent); box-shadow: var(--shadow); position:relative; overflow:hidden}
+    .k::before{content:""; position:absolute; inset:7px 12px; border:3px solid var(--accent); border-left:0; border-top:0; border-bottom-right-radius:8px; filter:drop-shadow(0 0 6px var(--accent));}
+    .logo{font-weight:900;letter-spacing:.3px}
+    .controls{display:flex;align-items:center;gap:10px;flex-wrap:wrap}
+    .chip, .btn{border:1px solid var(--border);color:var(--text);background:transparent;border-radius:12px;padding:8px 12px;font-weight:700;cursor:pointer}
+    .btn.primary{background:var(--accent);color:#001018;border-color:transparent;box-shadow:var(--shadow)}
+    .btn.ghost{background:transparent}
+    .chip.active{background:var(--panel-2)}
+    a{color:var(--accent)}
+    .grid{display:grid;grid-template-columns: 1.1fr .9fr;gap:16px}
+    @media (max-width: 980px){ .grid{grid-template-columns:1fr} }
+    .card{background:linear-gradient(180deg, var(--panel), var(--panel-2)); border:1px solid var(--border); border-radius:16px; padding:16px}
+    h2{margin:0 0 8px 0}
+    .muted{color:var(--muted)}
+    .row{display:grid;grid-template-columns:repeat(12,1fr);gap:10px}
+    .field{display:flex;flex-direction:column;gap:6px;grid-column: span 6}
+    .field.sm{grid-column: span 3}
+    .field.full{grid-column: 1/-1}
+    label{font-size:12px;color:var(--muted);display:flex;align-items:center;gap:8px}
+    input, select{padding:10px 12px;border-radius:12px;border:1px solid var(--border);background:transparent;color:inherit}
+    input[type="number"]::-webkit-outer-spin-button,
+    input[type="number"]::-webkit-inner-spin-button{ -webkit-appearance: none; margin: 0; }
+    .glow{box-shadow: var(--shadow)}
+    .lamp{display:inline-flex;align-items:center;gap:10px}
+    .dot{width:14px;height:14px;border-radius:999px;border:2px solid var(--border);box-shadow:0 0 0 2px rgba(0,0,0,.25) inset}
+    .dot.good{background:var(--good); box-shadow: 0 0 10px var(--good), 0 0 18px var(--good)}
+    .dot.bad{background:var(--bad); box-shadow: 0 0 10px var(--bad), 0 0 18px var(--bad)}
+    .pill{display:inline-flex;gap:8px;align-items:center;padding:6px 10px;border:1px dashed var(--border);border-radius:999px;background:rgba(2,12,20,.2)}
+    .help{display:none;font-size:12px;color:var(--muted);background:rgba(2,12,20,.35);border:1px dashed var(--border);padding:8px;border-radius:10px}
+    .help.on{display:block}
+    .help-toggle{display:inline-flex;align-items:center;gap:8px}
+    .legend{display:flex;gap:8px;flex-wrap:wrap}
+    .accent-swatch{width:26px;height:26px;border-radius:8px;border:1px solid var(--border);cursor:pointer}
+    .accent-emerald{background:#10b981}.accent-cyan{background:#22d3ee}.accent-fuchsia{background:#e879f9}.accent-purple{background:#a78bfa}.accent-amber{background:#f59e0b}
+    .stat{display:grid;grid-template-columns:1fr auto;gap:8px;padding:8px 0;border-bottom:1px dashed var(--border)}
+    .stat:last-child{border-bottom:0}
+    .big{font-size:26px;font-weight:900}
+    .sub{font-size:12px;color:var(--muted)}
+    .section-title{display:flex;align-items:center;justify-content:space-between;gap:10px;margin-bottom:8px}
+    .toggle{display:inline-flex;align-items:center;gap:8px}
+    .toggle input{accent-color:var(--accent)}
+    .banner{padding:10px 12px;border:1px dashed var(--border);border-radius:12px;background:rgba(34,211,238,.08)}
+    .badge{display:inline-flex;align-items:center;gap:6px;padding:4px 8px;border-radius:999px;border:1px solid var(--border);background:var(--panel-2);font-size:12px}
+    .footer{margin-top:12px;font-size:12px;color:var(--muted);display:flex;justify-content:space-between;gap:10px;flex-wrap:wrap}
+  </style>
+</head>
+<body>
+  <div class="wrap" id="app">
+    <header>
+      <div class="brand">
+        <div class="k" aria-hidden="true"></div>
+        <div>
+          <div class="logo">Kapi Deal Calculator</div>
+          <div class="sub">Neon edition — intuitive, glowy, investor-friendly</div>
+        </div>
+      </div>
+      <div class="controls">
+        <span class="badge">Theme</span>
+        <button class="chip" id="themeToggle" aria-label="Toggle theme">🌙</button>
+        <span class="badge">Accent</span>
+        <div class="legend">
+          <div class="accent-swatch accent-emerald" title="Emerald" data-accent="#10b981"></div>
+          <div class="accent-swatch accent-cyan" title="Cyan" data-accent="#22d3ee"></div>
+          <div class="accent-swatch accent-fuchsia" title="Fuchsia" data-accent="#e879f9"></div>
+          <div class="accent-swatch accent-purple" title="Purple" data-accent="#a78bfa"></div>
+          <div class="accent-swatch accent-amber" title="Amber" data-accent="#f59e0b"></div>
+        </div>
+        <label class="toggle"><input type="checkbox" id="helpMode"> Help mode</label>
+      </div>
+    </header>
+
+    <div class="grid">
+      <section class="card glow">
+        <div class="section-title">
+          <h2>Inputs</h2>
+          <div class="lamp"><span id="signalDot" class="dot"></span><span id="signalText" class="sub">—</span></div>
+        </div>
+
+        <div class="row">
+          <div class="field sm">
+            <label>Property type <span class="pill">SFH · Multi · Retail · Office</span></label>
+            <select id="propType">
+              <option>Multifamily</option><option>Single-family</option><option>Retail</option><option>Office</option><option>Industrial</option>
+            </select>
+            <div class="help" data-help="propType">Used for suggested defaults like vacancy and expenses.</div>
+          </div>
+
+          <div class="field sm">
+            <label>Lease type <span class="pill">NNN · MG · Gross</span></label>
+            <select id="leaseType">
+              <option>NNN</option><option>Modified Gross</option><option>Gross</option>
+            </select>
+            <div class="help" data-help="leaseType">NNN: tenant pays taxes/insurance/maint. MG/Gross: landlord pays some/all opex.</div>
+          </div>
+
+          <div class="field sm">
+            <label>Purchase price ($)</label>
+            <input id="price" type="number" min="0" step="1000" value="400000">
+            <div class="help" data-help="price">Contract purchase price (before closing costs and renovations).</div>
+          </div>
+
+          <div class="field sm">
+            <label>Down payment (%)</label>
+            <input id="downPct" type="number" min="0" max="100" step="0.5" value="20">
+            <div class="help" data-help="downPct">Percent of price paid upfront.</div>
+          </div>
+
+          <div class="field sm">
+            <label>Closing costs (%)</label>
+            <input id="closePct" type="number" min="0" step="0.1" value="2.5">
+            <div class="help" data-help="closePct">Typical range 2–4% of the purchase price.</div>
+          </div>
+
+          <div class="field sm">
+            <label>Upfront CapEx / Renovation ($)</label>
+            <input id="reno" type="number" min="0" step="500" value="10000">
+            <div class="help" data-help="reno">One-time improvements at/after closing.</div>
+          </div>
+
+          <div class="field sm">
+            <label>Loan type</label>
+            <select id="loanType"><option>Amortizing</option><option>Interest Only</option></select>
+            <div class="help" data-help="loanType">Amortizing: principal + interest. I/O: interest only (lower payment, no principal).</div>
+          </div>
+
+          <div class="field sm">
+            <label>Interest rate (% APR)</label>
+            <input id="rate" type="number" min="0" step="0.05" value="6.5">
+            <div class="help" data-help="rate">Annual interest rate (APR).</div>
+          </div>
+
+          <div class="field sm">
+            <label>Term (years)</label>
+            <input id="termYears" type="number" min="1" step="1" value="30">
+            <div class="help" data-help="termYears">Amortization period or I/O term.</div>
+          </div>
+
+          <div class="field sm">
+            <label>I/O period (months)</label>
+            <input id="ioMonths" type="number" min="0" step="1" value="0">
+            <div class="help" data-help="ioMonths">Months of interest-only (0 for none).</div>
+          </div>
+
+          <div class="field sm">
+            <label>Monthly rent ($)</label>
+            <input id="rent" type="number" min="0" step="50" value="4500">
+            <div class="help" data-help="rent">Total scheduled rent per month (all units/tenants).</div>
+          </div>
+
+          <div class="field sm">
+            <label>Other income / month ($)</label>
+            <input id="otherInc" type="number" min="0" step="10" value="200">
+            <div class="help" data-help="otherInc">Parking, laundry, storage, reimbursements, etc.</div>
+          </div>
+
+          <div class="field sm">
+            <label>Vacancy (%)</label>
+            <input id="vacancy" type="number" min="0" max="100" step="0.5" value="5">
+            <div class="help" data-help="vacancy">Economic vacancy allowance.</div>
+          </div>
+
+          <div class="field sm">
+            <label>Expense mode</label>
+            <select id="expMode"><option>Ratio (%)</option><option>Advanced (itemized)</option></select>
+            <div class="help" data-help="expMode">Use a simple expense ratio or itemize expenses below.</div>
+          </div>
+
+          <div class="field sm" id="expRatioBox">
+            <label>Expense ratio (%)</label>
+            <input id="expRatio" type="number" min="0" max="100" step="1" value="40">
+            <div class="help" data-help="expRatio">Common starting points: MF 35–50%, SFH 20–30%, Retail 15–25%.</div>
+          </div>
+
+          <div class="field full" id="advWrap" style="display:none">
+            <div class="row">
+              <div class="field sm">
+                <label>Taxes / mo ($)</label><input id="taxes" type="number" min="0" step="10" value="300">
+              </div>
+              <div class="field sm">
+                <label>Insurance / mo ($)</label><input id="ins" type="number" min="0" step="10" value="150">
+              </div>
+              <div class="field sm">
+                <label>Utilities / mo ($)</label><input id="utils" type="number" min="0" step="10" value="0">
+              </div>
+              <div class="field sm">
+                <label>Repairs/CapEx reserve / mo ($)</label><input id="repairs" type="number" min="0" step="10" value="200">
+              </div>
+              <div class="field sm">
+                <label>Mgmt fee (% of EGI)</label><input id="mgmtPct" type="number" min="0" step="0.5" value="8">
+              </div>
+              <div class="field sm">
+                <label>HOA/Other / mo ($)</label><input id="hoa" type="number" min="0" step="10" value="0">
+              </div>
+            </div>
+            <div class="help on">Advanced: sums itemized costs + management % of EGI.</div>
+          </div>
+
+          <div class="field full">
+            <div class="row">
+              <div class="field sm">
+                <label>Sample data</label>
+                <button class="btn ghost" id="btnSample">Load example</button>
+              </div>
+              <div class="field sm">
+                <label>Persistence</label>
+                <button class="btn ghost" id="btnSave">Save inputs</button>
+              </div>
+              <div class="field sm">
+                <label>&nbsp;</label>
+                <button class="btn" id="btnReset">Reset</button>
+              </div>
+              <div class="field sm">
+                <label>&nbsp;</label>
+                <button class="btn primary" id="btnRun">Run analysis</button>
+              </div>
+            </div>
+          </div>
+        </div>
+      </section>
+
+      <section class="card">
+        <div class="section-title">
+          <h2>Results</h2>
+          <span class="badge">Year‑1 estimates</span>
+        </div>
+
+        <div class="stat"><div>Upfront cash invested</div><div class="big" id="upfront">$0</div></div>
+        <div class="stat"><div>Loan amount</div><div id="loanAmt">$0</div></div>
+        <div class="stat"><div>Monthly debt service</div><div id="moDebt">$0</div></div>
+        <div class="stat"><div>EGI (annual)</div><div id="egi">$0</div></div>
+        <div class="stat"><div>Operating expenses (annual)</div><div id="opex">$0</div></div>
+        <div class="stat"><div>NOI (annual)</div><div id="noi">$0</div></div>
+        <div class="stat"><div>Annual debt service</div><div id="annDebt">$0</div></div>
+        <div class="stat"><div>Cash flow (annual)</div><div id="annCF">$0</div></div>
+        <div class="stat"><div>DSCR</div><div id="dscr">—</div></div>
+        <div class="stat"><div>Cap rate</div><div id="cap">—</div></div>
+        <div class="stat"><div>Cash‑on‑Cash (Yr1)</div><div id="coc">—</div></div>
+        <div class="stat"><div>Break‑even occupancy</div><div id="beOcc">—</div></div>
+
+        <div class="banner" style="margin-top:12px">
+          <b>Tip:</b> Toggle <i>Help mode</i> (top right) to see short explanations under each field.
+        </div>
+
+        <div class="footer">
+          <span class="sub">Visual accent: choose a color above for that neon glow ✨</span>
+          <span class="sub">This is a simplified model — verify numbers for your market.</span>
+        </div>
+      </section>
+    </div>
+  </div>
+
+  <script>
+    const $ = (id) => document.getElementById(id);
+    const fmt = (n) => n.toLocaleString(undefined,{maximumFractionDigits:0});
+    const money = (n) => (n<0?'-':'')+'$'+Math.abs(n).toLocaleString(undefined,{maximumFractionDigits:0});
+
+    // Theme & accent
+    const themeToggle = $('themeToggle');
+    const helpToggle = $('helpMode');
+    const accentSwatches = document.querySelectorAll('.accent-swatch');
+    const root = document.documentElement;
+
+    function applyAccent(hex){
+      root.style.setProperty('--accent', hex);
+      root.style.setProperty('--accent-weak', hex+'40');
+      localStorage.setItem('kapi.accent', hex);
+    }
+    accentSwatches.forEach(s=>s.addEventListener('click',()=>applyAccent(s.dataset.accent)));
+
+    function loadTheme(){
+      const t = localStorage.getItem('kapi.theme')||'dark';
+      if (t==='light') document.body.setAttribute('data-theme','light'); else document.body.removeAttribute('data-theme');
+      themeToggle.textContent = t==='light'?'🌞':'🌙';
+      const a = localStorage.getItem('kapi.accent'); if (a) applyAccent(a);
+    }
+    themeToggle.addEventListener('click',()=>{
+      const light = !document.body.hasAttribute('data-theme');
+      if (light) document.body.setAttribute('data-theme','light'); else document.body.removeAttribute('data-theme');
+      localStorage.setItem('kapi.theme', light?'light':'dark');
+      themeToggle.textContent = light?'🌞':'🌙';
+    });
+    loadTheme();
+
+    // Help mode
+    function setHelp(on){
+      document.querySelectorAll('.help').forEach(h=>h.classList.toggle('on', on));
+      localStorage.setItem('kapi.help', on?'1':'0');
+    }
+    helpToggle.addEventListener('change', e=>setHelp(e.target.checked));
+    setHelp(localStorage.getItem('kapi.help')==='1'); helpToggle.checked = localStorage.getItem('kapi.help')==='1';
+
+    // Show/hide advanced
+    const expMode = $('expMode'); const advWrap = $('advWrap'); const expRatioBox = $('expRatioBox');
+    function updateExpMode(){
+      const adv = expMode.value.includes('Advanced');
+      advWrap.style.display = adv?'block':'none';
+      expRatioBox.style.display = adv?'none':'block';
+    }
+    expMode.addEventListener('change', updateExpMode); updateExpMode();
+
+    // Inputs
+    const inputs = ['propType','leaseType','price','downPct','closePct','reno','loanType','rate','termYears','ioMonths','rent','otherInc','vacancy','expMode','expRatio','taxes','ins','utils','repairs','mgmtPct','hoa'];
+    function saveInputs(){
+      const data = {}; inputs.forEach(id=>data[id] = $(id).value);
+      localStorage.setItem('kapi.calc.inputs', JSON.stringify(data));
+    }
+    function loadInputs(){
+      try{
+        const data = JSON.parse(localStorage.getItem('kapi.calc.inputs')||'{}');
+        inputs.forEach(id=>{ if (data[id]!==undefined) $(id).value = data[id]; });
+        updateExpMode();
+      }catch{}
+    }
+    $('btnSave').addEventListener('click', ()=>{ saveInputs(); alert('Saved ✓'); });
+    function resetInputs(){
+      localStorage.removeItem('kapi.calc.inputs'); location.reload();
+    }
+    $('btnReset').addEventListener('click', resetInputs);
+
+    $('btnSample').addEventListener('click', ()=>{
+      $('propType').value='Multifamily';
+      $('leaseType').value='Modified Gross';
+      $('price').value=525000; $('downPct').value=25; $('closePct').value=3; $('reno').value=15000;
+      $('loanType').value='Amortizing'; $('rate').value=6.75; $('termYears').value=30; $('ioMonths').value=0;
+      $('rent').value=6200; $('otherInc').value=250; $('vacancy').value=6;
+      $('expMode').value='Advanced (itemized)'; updateExpMode();
+      $('taxes').value=420; $('ins').value=190; $('utils').value=120; $('repairs').value=250; $('mgmtPct').value=7; $('hoa').value=0;
+    });
+
+    // Math
+    function amortPayment(P, annualRate, years){
+      const r = (annualRate/100)/12;
+      const n = years*12;
+      if (r===0) return P/n;
+      const m = r*Math.pow(1+r,n)/(Math.pow(1+r,n)-1);
+      return P*m;
+    }
+
+    function analyze(){
+      const price = +$('price').value;
+      const downPct = +$('downPct').value/100;
+      const closePct = +$('closePct').value/100;
+      const reno = +$('reno').value;
+      const loanType = $('loanType').value;
+      const rate = +$('rate').value;
+      const years = +$('termYears').value;
+      const ioMonths = +$('ioMonths').value;
+      const rent = +$('rent').value;
+      const otherInc = +$('otherInc').value;
+      const vacancy = +$('vacancy').value/100;
+      const expModeVal = $('expMode').value;
+      const expRatio = +$('expRatio').value/100;
+      const taxes = +$('taxes').value, ins = +$('ins').value, utils= +$('utils').value, repairs= +$('repairs').value, mgmtPct= +$('mgmtPct').value/100, hoa= +$('hoa').value;
+
+      const down = price*downPct;
+      const closing = price*closePct;
+      const loan = Math.max(0, price - down);
+      const moDebt = (loanType==='Interest Only')
+        ? loan*(rate/100)/12
+        : amortPayment(loan, rate, years);
+      const annDebt = moDebt*12;
+
+      const rentAnnual = rent*12;
+      const otherAnnual = otherInc*12;
+      const sgi = rentAnnual + otherAnnual;
+      const vacLoss = sgi*vacancy;
+      const egi = sgi - vacLoss;
+
+      let opexAnnual;
+      if (expModeVal.startsWith('Ratio')){
+        opexAnnual = egi*expRatio;
+      } else {
+        const mgmt = egi*mgmtPct;
+        opexAnnual = (taxes+ins+utils+repairs+hoa)*12 + mgmt;
+      }
+
+      const noi = egi - opexAnnual;
+      const annCF = noi - annDebt;
+
+      const dscr = annDebt>0 ? (noi/annDebt) : null;
+      const cap = price>0 ? (noi/price) : null;
+
+      const upfront = down + closing + reno;
+      const coc = upfront>0 ? (annCF/upfront) : null;
+
+      const beOcc = Math.max(0, Math.min(1, (opexAnnual + annDebt - otherAnnual) / Math.max(1, rentAnnual)));
+
+      // Update UI
+      $('upfront').textContent = money(upfront);
+      $('loanAmt').textContent = money(loan);
+      $('moDebt').textContent = money(moDebt);
+      $('egi').textContent = money(egi);
+      $('opex').textContent = money(opexAnnual);
+      $('noi').textContent = money(noi);
+      $('annDebt').textContent = money(annDebt);
+      $('annCF').textContent = money(annCF);
+      $('dscr').textContent = dscr? dscr.toFixed(2): '—';
+      $('cap').textContent = cap? (cap*100).toFixed(2)+'%':'—';
+      $('coc').textContent = coc? (coc*100).toFixed(2)+'%':'—';
+      $('beOcc').textContent = (beOcc*100).toFixed(1)+'%';
+
+      const good = (noi/12 - moDebt) >= 0;
+      const dot = $('signalDot'); const txt = $('signalText');
+      dot.className = 'dot ' + (good?'good':'bad');
+      txt.textContent = good? 'Cash‑flow positive' : 'Not cash‑flowing';
+
+      saveInputs();
+    }
+
+    $('btnRun').addEventListener('click', analyze);
+
+    // Suggest defaults by type/lease
+    function applyHints(){
+      const type = $('propType').value, lease = $('leaseType').value;
+      if (lease==='NNN'){
+        if ($('expMode').value.startsWith('Ratio')) $('expRatio').value = 20;
+        $('mgmtPct').value = 5;
+        $('utils').value = 0;
+      } else if (lease==='Modified Gross'){
+        if ($('expMode').value.startsWith('Ratio')) $('expRatio').value = (type==='Retail'||type==='Office')? 28 : 35;
+        $('mgmtPct').value = 7;
+      } else {
+        if ($('expMode').value.startsWith('Ratio')) $('expRatio').value = (type==='Single-family')? 25 : 40;
+        $('mgmtPct').value = 8;
+      }
+      if (type==='Single-family') $('vacancy').value = 4;
+      if (type==='Multifamily') $('vacancy').value = 6;
+      if (type==='Retail'||type==='Office') $('vacancy').value = 8;
+      if (type==='Industrial') $('vacancy').value = 7;
+    }
+    $('propType').addEventListener('change', applyHints);
+    $('leaseType').addEventListener('change', applyHints);
+
+    // Auto-run on load
+    function init(){
+      const last = localStorage.getItem('kapi.calc.inputs');
+      if (last) loadInputs();
+      applyHints();
+      analyze();
+    }
+    init();
+  </script>
+
+<script src="https://cdn.auth0.com/js/auth0-spa-js/2.5/auth0-spa-js.production.js"></script>
+<script src="/auth0-config.js"></script>
+<script src="/auth0-client.js"></script>
+
+</body>
+</html>

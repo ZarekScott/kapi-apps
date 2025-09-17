@@ -1,0 +1,16 @@
+
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 240 240">
+  <defs>
+    <style>
+      .bg{fill:#0b1220}
+      .white{fill:#ffffff}
+      .green{fill:#16a34a}
+    </style>
+  </defs>
+  <circle class="bg" cx="120" cy="120" r="120"/>
+  <g transform="translate(45,44)">
+    <path class="white" d="M30 30 h25 v40 l36 -40 h30 l-46 50 48 56 h-33l-35-42v42H30z"/>
+    <circle class="green" cx="93" cy="26" r="7"/>
+    <path class="green" d="M60 120 a48 28 0 0 0 96 0 h-18 a30 18 0 0 1 -60 0z"/>
+  </g>
+</svg>

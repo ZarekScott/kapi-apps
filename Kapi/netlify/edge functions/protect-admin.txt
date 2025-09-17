@@ -1,0 +1,32 @@
+// Blocks non-admins from /admin/* by reading the Netlify Identity JWT from the nf_jwt cookie.
+// Grants access if user has role "admin" OR their email is listed in ADMIN_EMAILS env var.
+
+export default async (req, context) => {
+  const cookie = req.headers.get('cookie') || '';
+  const m = cookie.match(/(?:^|;\s*)nf_jwt=([^;]+)/);
+  if (!m) return Response.redirect(new URL('/signin.html', req.url), 302);
+
+  const token = m[1];
+  // decode JWT payload (no external libs)
+  const [, payload] = token.split('.');
+  try {
+    const json = JSON.parse(atob(payload.replace(/-/g, '+').replace(/_/g, '/')));
+    const email = (json.email || json.e || '').toLowerCase();
+    const roles = (json.app_metadata && json.app_metadata.roles) || json.roles || [];
+
+    const adminEmails = (Deno.env.get('ADMIN_EMAILS') || '')
+      .split(',')
+      .map(s => s.trim().toLowerCase())
+      .filter(Boolean);
+
+    const isAdmin = roles.includes('admin') || (adminEmails.length && adminEmails.includes(email));
+    if (!isAdmin) {
+      return Response.redirect(new URL('/signin.html', req.url), 302);
+    }
+    return context.next();
+  } catch {
+    return Response.redirect(new URL('/signin.html', req.url), 302);
+  }
+};
+
+export const config = { path: ['/admin*'] };

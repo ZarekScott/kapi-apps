@@ -1,0 +1,120 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Reset password — Kapi</title>
+  <link rel="stylesheet" href="assets/css/brand.css">
+  <script src="assets/js/theme.js" defer></script>
+
+  <style>
+    :root{--bg:#0b1220;--panel:#0f172a;--border:#1f2a44;--text:#e5e7eb;--muted:#94a3b8;--accent:#16a34a;--link:#7dd3fc}
+    body{margin:0;background:var(--bg);color:var(--text);font-family:Inter,system-ui,-apple-system,Segoe UI,Roboto,Helvetica,Arial,sans-serif}
+    .header .inner{max-width:1100px;margin:0 auto;padding:14px 16px;display:flex;align-items:center;justify-content:space-between}
+    .logo{font-weight:900;letter-spacing:.4px}
+    .kapi-container{max-width:1100px;margin:0 auto;padding:0 16px}
+    .card{border:1px solid var(--border);background:var(--panel);border-radius:16px;padding:24px}
+    .center{display:grid;place-items:center;min-height:72vh}
+    .title{margin:0 0 8px 0;font-size:28px}
+    .sub{color:var(--muted);margin-top:0}
+    .row{display:flex;gap:10px;flex-wrap:wrap}
+    .field{display:grid;gap:6px;margin-top:10px}
+    label{font-size:12px;color:var(--muted)}
+    input[type=email],input[type=password],input[type=text]{padding:12px;border-radius:12px;border:1px solid var(--border);background:transparent;color:inherit}
+    .hint{font-size:12px;color:var(--muted)}
+    .btn{display:inline-flex;align-items:center;gap:8px;padding:10px 14px;border-radius:10px;border:1px solid var(--border);background:transparent;color:#fff;font-weight:700;cursor:pointer}
+    .btn.primary{background:var(--accent);border-color:transparent}
+    a{color:var(--link);text-decoration:none}
+    .danger{color:#fecaca}
+    .ok{color:#bbf7d0}
+    .msg{margin-top:10px;font-size:14px}
+    .switch{display:flex;align-items:center;gap:8px;margin-top:10px}
+  </style>
+
+</head>
+<body>
+  <header class="header">
+    <div class="inner">
+      <div class="logo">Kapi</div>
+      <div class="actions">
+        <button class="btn" onclick="toggleTheme()"><span id="themeLabel">🌙</span></button>
+      </div>
+    </div>
+  </header>
+
+  <main class="kapi-container center">
+    <div class="card" style="max-width:520px;width:100%">
+      <h1 class="title">Password recovery</h1>
+      <p class="sub">Enter your email to receive a recovery link. Open that link to set a new password.</p>
+
+      <form id="reqForm">
+        <div class="field">
+          <label for="rEmail">Email</label>
+          <input id="rEmail" type="email" required placeholder="you@domain.com">
+        </div>
+        <div class="row" style="margin-top:14px">
+          <button class="btn primary" type="submit">Send recovery link</button>
+          <a class="btn" href="/login.html">Back to login</a>
+        </div>
+      </form>
+
+      <hr style="margin:20px 0;border:0;border-top:1px solid var(--border)">
+
+      <h2 class="title" style="font-size:20px;margin-top:0">Set a new password</h2>
+      <p class="sub">If you arrived here from a recovery email, paste your token below (or it may be in the URL).</p>
+      <form id="setForm">
+        <div class="field">
+          <label for="token">Recovery token</label>
+          <input id="token" type="text" placeholder="#recovery_token=...">
+        </div>
+        <div class="field">
+          <label for="newpass">New password</label>
+          <input id="newpass" type="password" required placeholder="New password">
+        </div>
+        <div class="row" style="margin-top:14px">
+          <button class="btn primary" type="submit">Update password</button>
+        </div>
+      </form>
+
+      <div id="msg" class="msg"></div>
+    </div>
+  </main>
+
+  <script src="https://cdn.jsdelivr.net/npm/gotrue-js/dist/gotrue.min.js"></script>
+  <script>
+    const IDENTITY_URL = (window.netlifyIdentitySettings && window.netlifyIdentitySettings.APIUrl) || (window.location.origin + '/.netlify/identity');
+    const auth = new window.GoTrue({ APIUrl: IDENTITY_URL });
+  </script>
+
+  <script>
+    const msg = document.getElementById('msg');
+    function setMsg(text, ok=false){ msg.textContent = text; msg.className = 'msg ' + (ok ? 'ok' : 'danger'); }
+    const hash = (window.location.hash || '').replace(/^#/, '');
+    const params = new URLSearchParams(hash);
+    if (params.get('recovery_token')) document.getElementById('token').value = params.get('recovery_token');
+    document.getElementById('reqForm').addEventListener('submit', async (e) => {
+      e.preventDefault();
+      try {
+        const email = document.getElementById('rEmail').value.trim();
+        await auth.requestPasswordRecovery(email);
+        setMsg('Recovery email sent. Check your inbox.', true);
+      } catch (err) {
+        setMsg(err && err.message ? err.message : 'Could not send recovery email');
+      }
+    });
+    document.getElementById('setForm').addEventListener('submit', async (e) => {
+      e.preventDefault();
+      const token = document.getElementById('token').value.trim().replace(/^recovery_token=/,'').replace(/^access_token=/,'');
+      const newpass = document.getElementById('newpass').value;
+      if (!token) return setMsg('Missing recovery token');
+      try {
+        const user = await auth.recover(token);
+        await user.update({ password: newpass });
+        setMsg('Password updated. You are now signed in.', true);
+        setTimeout(() => window.location.href = '/apps.html', 800);
+      } catch (err) {
+        setMsg(err && err.message ? err.message : 'Could not update password');
+      }
+    });
+  </script>
+</body>
+</html>

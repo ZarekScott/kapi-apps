@@ -1,0 +1,38 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Kapi — Admin</title>
+  <meta name="robots" content="noindex,nofollow">
+  <link rel="stylesheet" href="/assets/css/brand.css">
+  <script src="https://identity.netlify.com/v1/netlify-identity-widget.js"></script>
+</head>
+<body class="kapi-container" style="padding:24px 0 40px">
+  <div class="kapi-card p-6" style="max-width:960px;margin:0 auto">
+    <h1 class="m-0">Admin</h1>
+    <p class="muted">You must be signed in as the admin.</p>
+
+    <div style="display:flex; gap:10px; margin:10px 0">
+      <button class="btn" onclick="netlifyIdentity.open('login')">Sign in</button>
+      <button class="btn" onclick="netlifyIdentity.logout()">Sign out</button>
+    </div>
+
+    <pre id="me" class="muted">Loading…</pre>
+
+    <!-- Your admin UI goes here -->
+    <div id="adminApp">Welcome, admin.</div>
+  </div>
+
+  <script>
+    function showUser(u){
+      document.getElementById('me').textContent = u
+        ? `Signed in as ${u.email}\nRoles: ${(u.app_metadata && u.app_metadata.roles) || '[]'}`
+        : 'Not signed in';
+    }
+    netlifyIdentity.on('init', showUser);
+    netlifyIdentity.on('login', showUser);
+    netlifyIdentity.on('logout', () => showUser(null));
+    netlifyIdentity.init();
+  </script>
+</body>
+</html>

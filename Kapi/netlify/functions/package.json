@@ -1,0 +1,9 @@
+{
+  "name": "kapi-functions",
+  "version": "1.0.0",
+  "license": "MIT",
+  "dependencies": {
+    "jsonwebtoken": "^9.0.2",
+    "jwks-rsa": "^3.0.1"
+  }
+}

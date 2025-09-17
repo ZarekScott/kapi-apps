@@ -1,0 +1,43 @@
+
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Kapi — Home</title>
+  <link rel="stylesheet" href="assets/css/brand.css">
+  <script src="assets/js/theme.js" defer></script>
+</head>
+<body>
+  <header class="header">
+    <div class="inner">
+      <div class="logo">Kapi</div>
+      <nav class="nav">
+        <a href="signup.html">Sign up</a>
+        <a href="apps.html">Account</a>
+      </nav>
+      <div class="actions">
+        <a class="btn" href="login.html" onclick="kapiAuth.login();return false;">Log in</a>
+        <a class="btn" href="signup.html" onclick="kapiAuth.signup();return false;">Sign up</a>
+        <button class="btn" onclick="toggleTheme()"><span id="themeLabel">🌙</span></button>
+      </div>
+    </div>
+  </header>
+
+  <main class="kapi-container">
+    <section class="kapi-hero">
+      <div class="badge">Kapi</div>
+      <h1>Deal tools for serious investors</h1>
+      <p class="muted">Modern, secure, and fast. Sign in to access your apps.</p>
+      <div style="display:flex;gap:10px">
+        <a class="btn primary" href="signup.html" onclick="kapiAuth.signup();return false;">Create account</a>
+        <a class="btn" href="apps.html">Go to Account</a>
+      </div>
+    </section>
+  </main>
+
+  <!-- Auth0 -->
+  <script src="https://cdn.auth0.com/js/auth0-spa-js/2.5/auth0-spa-js.production.js"></script>
+  <script src="/auth0-config.js"></script>
+  <script src="/auth0-client.js"></script>
+</body>
+</html>

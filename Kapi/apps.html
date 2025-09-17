@@ -1,0 +1,72 @@
+
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
+  <title>Kapi — Account</title>
+  <link rel="stylesheet" href="assets/css/brand.css">
+  <script src="assets/js/theme.js" defer></script>
+  <style>
+    .grid{display:grid;grid-template-columns:repeat(3,1fr);gap:16px}
+    @media (max-width: 900px){ .grid{grid-template-columns:1fr} }
+    .muted{color:var(--muted)}
+  </style>
+</head>
+<body>
+  <header class="header">
+    <div class="inner">
+      <div class="logo"><strong>Kapi</strong></div>
+      <nav class="nav">
+        <a href="/index.html">Home</a>
+        <a href="/apps.html">Account</a>
+      </nav>
+      <div class="actions">
+        <a class="btn" href="#" onclick="kapiAuth.logout();return false;">Log out</a>
+        <button class="btn" onclick="toggleTheme()"><span id="themeLabel">🌙</span></button>
+      </div>
+    </div>
+  </header>
+
+  <main class="kapi-container">
+    <h1>My Apps</h1>
+    <p class="muted" id="hello">Loading…</p>
+    <hr class="line">
+    <div class="grid" id="appsGrid"></div>
+  </main>
+
+  <!-- Auth0 -->
+  <script src="https://cdn.auth0.com/js/auth0-spa-js/2.5/auth0-spa-js.production.js"></script>
+  <script src="/auth0-config.js"></script>
+  <script src="/auth0-client.js"></script>
+  <script>
+  const APP_CATALOG=[
+    {slug:'deal-calculator', name:'Deal Calculator', desc:'Analyze deals fast with a cash-flow signal.', link:'calculator.html'},
+    {slug:'underwriting-pro', name:'Underwriting Pro', desc:'Deeper metrics with tenant/rent-roll inputs.', link:'underwriting.html'},
+    {slug:'investor-tools', name:'Investor Tools Pack', desc:'Templates, checklists, and models.', link:'investor_tools.html'}
+  ];
+  function card(app, unlocked){
+    return `<div class="kapi-card p-6">
+      <h3 style="margin:0 0 6px 0">${app.name}</h3>
+      <p class="muted" style="min-height:40px">${app.desc}</p>
+      <div style="display:flex;gap:8px;align-items:center;margin-top:8px">
+        <span class="badge" style="${unlocked?'background:rgba(16,185,129,.18)':''}">${unlocked?'Active':'Locked'}</span>
+        ${unlocked?`<a class="btn primary" href="${app.link}">Open</a>`:`<a class="btn" href="/pricing.html">Get access</a>`}
+      </div></div>`;
+  }
+  async function render(){
+    await kapiRequireAuth('login.html');
+    const hello=document.getElementById('hello');
+    const grid=document.getElementById('appsGrid');
+    let email='';
+    try{ const u=await kapiAuth.getUser(); email=u?.email||''; }catch(e){}
+    hello.textContent = email? `Signed in as ${email}` : 'Signed in';
+    const unlocked=new Set([]); // Replace with real entitlements
+    grid.innerHTML = APP_CATALOG.map(a=>card(a, unlocked.has(a.slug))).join('');
+  }
+  render();
+  </script>
+
+<script>kapiRequireAuth('/login.html');</script>
+
+</body>
+</html>

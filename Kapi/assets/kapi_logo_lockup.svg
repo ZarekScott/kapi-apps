@@ -1,0 +1,20 @@
+
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 740 200">
+  <defs>
+    <style>
+      .white{fill:#ffffff}
+      .green{fill:#16a34a}
+      .ink{fill:#0b1220}
+    </style>
+  </defs>
+  <g transform="translate(10,10)">
+    <path class="white" d="M0 150 V20 h36 v54 l49 -54 h43 l-66 72 70 88 h-43l-53-69 v69z"/>
+    <circle class="green" cx="96" cy="18" r="10"/>
+    <path class="green" d="M48 160 a62 38 0 0 0 124 0 h-24 a38 24 0 0 1 -76 0z"/>
+  </g>
+  <g transform="translate(220,18)">
+    <path class="white" d="M58 152 q-28 0 -46 -18t-18 -45q0 -27 18 -45t46 -18q25 0 40 12v-10h34v124h-34v-10q-15 12 -40 12zm5 -30q17 0 28 -11t11 -27q0 -17 -11.5 -28t-27.5 -11q-17 0 -28 11t-11 28q0 16 11 27t28 11z"/>
+    <path class="white" d="M196 152 q-28 0 -46 -18t-18 -45q0 -27 18 -45t46 -18q25 0 40 12v-50h34v164h-34v-10q-15 12 -40 12zm5 -30q17 0 28 -11t11 -27q0 -17 -11.5 -28t-27.5 -11q-17 0 -28 11t-11 28q0 16 11 27t28 11z"/>
+    <rect class="white" x="332" y="26" width="34" height="126" rx="8"/>
+  </g>
+</svg>
