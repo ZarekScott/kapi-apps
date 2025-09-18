@@ -1,0 +1,53 @@
+<!doctype html><html lang="en"><head><title>Kapi — Get Access</title><meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<link rel="stylesheet" href="/assets/css/site.css">
+<link rel="stylesheet" href="/assets/css/brand.css"></head><body>
+<header class="header">
+  <div class="inner">
+    <a class="logo" href="/"><span class="mark">K</span><span>Kapi</span></a>
+    <nav class="nav">
+      <a href="/funnel.html">Get Access</a>
+      <a href="/apps.html">Apps</a>
+      <a href="/community.html">Community</a>
+    </nav>
+  </div>
+</header>
+<main class="kapi-container">
+  <div class="card">
+    <h1>Get Access</h1>
+    <p class="small">Pick your product. Stripe will collect your email; we'll send a secure access link automatically.</p>
+  </div>
+  <section class="grid3" style="margin-top:12px">
+    <a class="card" href="/.netlify/functions/pay?product=underwriting-pro"><h3>Underwriting Pro</h3><p class="small">Scenario modeling & pro-forma.</p><span class="btn primary">Buy with Stripe</span></a>
+    <a class="card" href="/.netlify/functions/pay?product=underwriting-pro-monthly"><h3>Underwriting Pro Monthly</h3><p class="small">Subscription access.</p><span class="btn primary">Buy with Stripe</span></a>
+    <a class="card" href="/.netlify/functions/pay?product=deal-calculator"><h3>Kapi Deal Calculator</h3><p class="small">NOI, Cap Rate, DSCR & CoC.</p><span class="btn primary">Buy with Stripe</span></a>
+    <a class="card" href="/.netlify/functions/pay?product=investor-tools-pack"><h3>Investor Tools Pack</h3><p class="small">Bundle: calculators & tools.</p><span class="btn primary">Buy with Stripe</span></a>
+    <a class="card" href="/.netlify/functions/pay?product=investor-discord"><h3>Investor Discord</h3><p class="small">Private community access.</p><span class="btn primary">Buy with Stripe</span></a>
+  </section>
+
+  <div class="card" style="margin-top:16px; max-width:520px">
+    <h3>Already purchased?</h3>
+    <p class="small">Enter your email; we’ll resend your access link.</p>
+    <form id="resendForm">
+      <label>Email</label>
+      <input class="input" type="email" id="resendEmail" required placeholder="you@example.com">
+      <button class="btn" style="margin-top:10px" type="submit">Email my link</button>
+      <p class="small" id="resendMsg"></p>
+    </form>
+  </div>
+</main>
+<footer>
+  <div class="inner small">
+    <div>© 2025 Kapi</div>
+    <div>Modern tools for investors</div>
+  </div>
+</footer>
+<script>
+document.getElementById('resendForm').addEventListener('submit', async (e)=>{
+  e.preventDefault();
+  const email = document.getElementById('resendEmail').value;
+  const res = await fetch('/.netlify/functions/resend-link', { method:'POST', headers: {'content-type':'application/json'}, body: JSON.stringify({ email }) });
+  document.getElementById('resendMsg').textContent = res.ok ? 'If we found a purchase, we sent your link.' : 'Could not send link.';
+});
+</script>
+</body></html>

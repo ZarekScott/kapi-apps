@@ -1,0 +1,331 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8"/>
+  <meta name="viewport" content="width=device-width, initial-scale=1"/>
+  <title>Underwriting Pro — Counter Offer</title>
+  <meta name="color-scheme" content="dark light"/>
+  <style>
+    :root{
+      --bg:#0a0f17; --panel:#0e1523; --panel-2:#0b1220; --ink:#e8eef6; --muted:#9ca9bd; --border:#1a2538;
+      --accent:#10b981; --btn-ink:#04130e; --radius:16px
+    }
+    [data-theme="light"]{ --bg:#f6f8fb; --panel:#ffffff; --panel-2:#f3f5f8; --ink:#0f172a; --muted:#51607a; --border:#e5ebf2; --btn-ink:#04130e }
+    *{box-sizing:border-box}
+    body{margin:0;background:var(--bg);color:var(--ink);font-family:Inter,system-ui,-apple-system,Segoe UI,Roboto,Helvetica,Arial,sans-serif}
+    .wrap{max-width:1100px;margin:0 auto;padding:24px}
+    header{display:flex;align-items:center;justify-content:space-between;margin-bottom:16px}
+    .controls{display:flex;gap:10px;flex-wrap:wrap}
+    .chip,.btn{border:1px solid var(--border);border-radius:12px;background:transparent;color:var(--ink);padding:8px 12px;font-weight:700;cursor:pointer;text-decoration:none}
+    .btn.primary{background:var(--accent);color:var(--btn-ink);border-color:transparent}
+    .panel{background:linear-gradient(180deg,var(--panel),var(--panel-2));border:1px solid var(--border);border-radius:var(--radius);padding:16px}
+    .row{display:grid;grid-template-columns:repeat(12,1fr);gap:10px}
+    .field{display:flex;flex-direction:column;gap:6px;grid-column:span 6}
+    .field.md{grid-column:span 4} .field.full{grid-column:1/-1}
+    label{font-size:12px;color:var(--muted)}
+    input,textarea,select{padding:10px 12px;border-radius:12px;border:1px solid var(--border);background:transparent;color:inherit}
+    .hr{height:1px;background:var(--border);margin:12px 0}
+    .mini{font-size:12px;color:var(--muted)}
+    .tag{display:inline-block;padding:2px 8px;border-radius:999px;border:1px solid var(--border);background:var(--panel-2);font-size:12px}
+    .kpi{display:grid;grid-template-columns:repeat(4,1fr);gap:10px}
+    .kpi .box{background:var(--panel-2);border:1px solid var(--border);border-radius:12px;padding:10px}
+    .kpi .label{font-size:12px;color:var(--muted)} .kpi .value{font-weight:900;font-size:18px}
+  </style>
+</head>
+<body>
+  <div class="wrap">
+    <header>
+      <h1 style="margin:0">Underwriting Pro</h1>
+      <div class="controls">
+        <a class="chip" href="index.html">← Back to Calculator</a>
+        <button class="chip" id="themeToggle" title="Toggle theme">🌙</button>
+        <button class="btn" id="btnImportLocal" title="Import from Calculator’s saved inputs">Import from Calculator</button>
+        <button class="btn" id="btnShare">Copy Share Link</button>
+      </div>
+    </header>
+
+    <section class="panel">
+      <div style="display:flex;align-items:center;justify-content:space-between">
+        <h2 style="margin:0">Deal Context</h2>
+        <span class="tag" id="dealTag">No deal loaded</span>
+      </div>
+      <div class="hr"></div>
+      <div class="kpi">
+        <div class="box"><div class="label">Asking Price</div><div class="value" id="kpiAsk">—</div></div>
+        <div class="box"><div class="label">Year-1 NOI</div><div class="value" id="kpiNOI">—</div></div>
+        <div class="box"><div class="label">Cap @ Ask</div><div class="value" id="kpiCapAsk">—</div></div>
+        <div class="box"><div class="label">DSCR @ Ask</div><div class="value" id="kpiDSCRAsk">—</div></div>
+      </div>
+    </section>
+
+    <section class="panel" id="uwPro">
+      <div style="display:flex;align-items:center;justify-content:space-between">
+        <h2 style="margin:0">Counter Offer & Email</h2>
+        <span class="tag">Income + DSCR + Replacement-Cost</span>
+      </div>
+
+      <div class="hr"></div>
+      <div class="row">
+        <div class="field md">
+          <label>Market/Entry Cap Rate (%)</label>
+          <input id="uwMarketCap" type="number" step="0.05" placeholder="Leave blank to auto-use current cap">
+        </div>
+        <div class="field md">
+          <label>Replacement cost ($/SF)</label>
+          <input id="uwRCpsf" type="number" step="1" value="200">
+        </div>
+        <div class="field md">
+          <label>Replacement-cost ceiling factor (%)</label>
+          <input id="uwRCfactor" type="number" step="1" value="95">
+        </div>
+        <div class="field md">
+          <label>Target DSCR (override)</label>
+          <input id="uwDSCR" type="number" step="0.05" placeholder="Uses Min DSCR if blank">
+        </div>
+      </div>
+
+      <div class="hr"></div>
+      <div class="row">
+        <div class="field md"><label>Suggested Counter Offer</label><input id="uwSuggested" disabled></div>
+        <div class="field md"><label>Price Change vs Asking</label><input id="uwDelta" disabled></div>
+        <div class="field md"><label>DSCR @ Counter</label><input id="uwDSCRat" disabled></div>
+        <div class="field md"><label>Cap Rate @ Counter</label><input id="uwCapAt" disabled></div>
+      </div>
+
+      <div class="row">
+        <div class="field full">
+          <label>Levers to Improve (auto)</label>
+          <div id="uwLevers" class="mini" style="line-height:1.5"></div>
+        </div>
+      </div>
+
+      <div class="hr"></div>
+      <div class="row">
+        <div class="field full">
+          <label>Email — Counter Offer Draft</label>
+          <textarea id="uwEmail" rows="12" style="width:100%"></textarea>
+          <div class="mini" style="margin-top:6px">Tip: click “Copy Email” and paste into your mail app.</div>
+        </div>
+      </div>
+
+      <div class="hr"></div>
+      <div style="display:flex; gap:10px; flex-wrap:wrap">
+        <button class="btn primary" id="uwAnalyzeBtn">Analyze & Suggest Counter</button>
+        <button class="btn" id="uwCopyBtn">Copy Email</button>
+      </div>
+    </section>
+  </div>
+
+  <script>
+    /* ===== Theme ===== */
+    const themeBtn = document.getElementById('themeToggle');
+    function currentTheme(){ return document.body.getAttribute('data-theme') || 'dark'; }
+    function setTheme(next){ if(next==='dark') document.body.removeAttribute('data-theme'); else document.body.setAttribute('data-theme',next);
+      localStorage.setItem('uw.theme', next); themeBtn.textContent = next==='light' ? '🌞' : '🌙'; }
+    themeBtn.addEventListener('click', ()=> setTheme(currentTheme()==='dark'?'light':'dark'));
+    setTheme(localStorage.getItem('uw.theme') || 'dark');
+
+    /* ===== Utils ===== */
+    const fmtUSD0 = n => isFinite(n)? n.toLocaleString(undefined,{style:'currency',currency:'USD',maximumFractionDigits:0}) : '—';
+    const fmtPct = n => isFinite(n)? (n*100).toFixed(2)+'%' : '—';
+    const num = v => +v || 0;
+    function moneyTextToNum(txt){ return num(String(txt||'').replace(/[^\d.-]/g,'')); }
+    function encodeDeal(obj){ const json = JSON.stringify(obj); return btoa(unescape(encodeURIComponent(json))); }
+    function decodeDeal(s){ try{ return JSON.parse(decodeURIComponent(escape(atob(s)))); }catch{ return null; } }
+
+    /* ===== Financing math ===== */
+    function amortPayment(P, annualRate, years){
+      const r = (annualRate/100)/12, n = Math.max(0, years*12|0);
+      if (n===0) return 0; if (r===0) return P/n;
+      return P * (r*Math.pow(1+r,n)) / (Math.pow(1+r,n)-1);
+    }
+    function pvFromPayment(M, annualRate, years){
+      const r = (annualRate/100)/12, n = Math.max(1, years*12|0);
+      if (r<=0) return M*n;
+      return M * (1 - Math.pow(1+r, -n)) / r;
+    }
+    function roundToThousand(v){ return Math.round((v||0)/1000)*1000; }
+
+    /* ===== Deal ingestion ===== */
+    // Expected payload mirrors calculator inputs (ids below) plus some basics
+    const CALC_IDS = ['propType','leaseType','units','sqft','price','downPct','closePct','reno','rent','otherInc','vacancy','expMode','expRatio','taxes','ins','utils','repairs','mgmtPct','hoa','loanType','rate','termYears','ioMonths','targetDSCR','targetCoC','targetLTV','gRent','gOther','gOpex','exitCap'];
+
+    function readFromURL(){
+      const dealParam = new URLSearchParams(location.search).get('deal');
+      if (!dealParam) return null;
+      return decodeDeal(dealParam);
+    }
+    function readFromCalcLocalStorage(){
+      // Prefer the last explicit handoff, fall back to the calculator’s saved inputs
+      const last = localStorage.getItem('kapi.uw.lastDeal');
+      if (last) try { return JSON.parse(last); } catch {}
+      const saved = localStorage.getItem('kapi.prestige.inputs');
+      if (saved) try { return JSON.parse(saved); } catch {}
+      return null;
+    }
+
+    let DEAL = null;
+
+    function normalizeDeal(d){
+      if (!d) return null;
+      const out = {};
+      CALC_IDS.forEach(id => out[id] = d[id] ?? d[id] === 0 ? d[id] : '');
+      // Ensure numbers where expected
+      ['units','sqft','price','downPct','closePct','reno','rent','otherInc','vacancy','expRatio','taxes','ins','utils','repairs','mgmtPct','hoa','rate','termYears','ioMonths','targetDSCR','targetCoC','targetLTV','gRent','gOther','gOpex','exitCap']
+        .forEach(k => out[k] = num(out[k]));
+      // Strings
+      ['propType','leaseType','loanType','expMode'].forEach(k => out[k] = (out[k]||'').toString());
+      return out;
+    }
+
+    /* ===== Year-1 recompute from deal ===== */
+    function computeYear1(price, c){
+      const downPct = (c.downPct||0)/100, closePct=(c.closePct||0)/100;
+      const loan = Math.max(0, price - price*downPct);
+      const moDebtAmort = amortPayment(loan, c.rate, c.termYears);
+      const moDebtIO = (c.rate>0) ? loan*(c.rate/100)/12 : 0;
+
+      const sgi = (c.rent + c.otherInc)*12;
+      const egi = sgi * (1 - (c.vacancy||0)/100);
+
+      let opexAnnual;
+      if ((c.expMode||'').startsWith('Ratio')) opexAnnual = egi * ((c.expRatio||0)/100);
+      else {
+        const mgmt = egi*((c.mgmtPct||0)/100);
+        opexAnnual = ((c.taxes||0)+(c.ins||0)+(c.utils||0)+(c.repairs||0)+(c.hoa||0))*12 + mgmt;
+      }
+
+      const ioMonths = Math.max(0, c.ioMonths|0);
+      const debtY1 = (c.loanType==='Interest Only' && ioMonths>0)
+        ? (moDebtIO*Math.min(12, ioMonths) + moDebtAmort*Math.max(0, 12- Math.min(12, ioMonths)))
+        : (c.loanType==='Interest Only' ? moDebtIO*12 : moDebtAmort*12);
+
+      const noi = egi - opexAnnual;
+      const dscr = debtY1>0 ? noi/debtY1 : null;
+      const cap = price>0 ? (noi/price) : null;
+
+      return { loan, noi, dscr, cap, debtY1 };
+    }
+
+    /* ===== Suggestion engine ===== */
+    function suggestCounter(c){
+      const y1 = computeYear1(c.price, c);
+      const NOI = y1.noi;
+
+      // Guardrails
+      const targetDSCR = num(document.getElementById('uwDSCR')?.value || 0) || (c.targetDSCR||1.2);
+      const ADSy = NOI / targetDSCR;
+      const Pmax = (c.loanType==='Interest Only')
+        ? ((c.rate/100)>0 ? ADSy / (c.rate/100) : Infinity)
+        : pvFromPayment(ADSy/12, c.rate, c.termYears);
+      const priceDSCR = (1 - (c.downPct||0)/100) > 0 ? (Pmax / (1 - (c.downPct||0)/100)) : Infinity;
+
+      const capPct = num(document.getElementById('uwMarketCap')?.value) || (y1.cap ? y1.cap*100 : 6.0);
+      const priceIncome = NOI / (Math.max(0.01, capPct)/100);
+
+      const rcPsf = num(document.getElementById('uwRCpsf')?.value || 0);
+      const rcFactor = (num(document.getElementById('uwRCfactor')?.value || 95))/100;
+      const rcTotal = (c.sqft||0) * (rcPsf||0);
+      const priceRCcap = rcTotal * rcFactor;
+
+      let suggested = Math.min(priceDSCR, priceIncome, priceRCcap || Infinity, c.price);
+      if (!isFinite(suggested) || suggested<=0) suggested = c.price;
+      suggested = roundToThousand(suggested);
+
+      const at = computeYear1(suggested, c);
+
+      // UI write
+      document.getElementById('uwSuggested').value = fmtUSD0(suggested);
+      document.getElementById('uwDelta').value = ((suggested - c.price)>=0?'+':'') + fmtUSD0(suggested - c.price);
+      document.getElementById('uwDSCRat').value = at.dscr ? at.dscr.toFixed(2)+'×' : '—';
+      document.getElementById('uwCapAt').value = at.cap ? (at.cap*100).toFixed(2)+'%' : '—';
+
+      // KPIs top
+      document.getElementById('kpiAsk').textContent = fmtUSD0(c.price);
+      document.getElementById('kpiNOI').textContent = fmtUSD0(NOI);
+      document.getElementById('kpiCapAsk').textContent = y1.cap ? (y1.cap*100).toFixed(2)+'%' : '—';
+      document.getElementById('kpiDSCRAsk').textContent = y1.dscr ? y1.dscr.toFixed(2)+'×' : '—';
+
+      // Levers
+      const levers = [];
+      if (y1.dscr && y1.dscr < targetDSCR){
+        // how much down % would clear DSCR at ask?
+        const ADSyAsk = NOI / targetDSCR;
+        const PmaxAsk = (c.loanType==='Interest Only')
+          ? ((c.rate/100)>0 ? ADSyAsk / (c.rate/100) : Infinity)
+          : pvFromPayment(ADSyAsk/12, c.rate, c.termYears);
+        const neededDownPct = Math.max(0, 1 - (PmaxAsk / c.price));
+        if (neededDownPct > (c.downPct/100) && neededDownPct < 0.95){
+          levers.push(`Increase down payment to ~${(neededDownPct*100).toFixed(1)}% to clear DSCR ${targetDSCR.toFixed(2)}× at asking.`);
+        }
+        levers.push(`Reduce price to ${fmtUSD0(suggested)} to meet DSCR ${targetDSCR.toFixed(2)}×.`);
+        levers.push(`Ask for temp I/O or rate buydown to improve early coverage.`);
+      }
+      if (priceRCcap && priceRCcap < c.price){
+        levers.push(`Asking exceeds replacement-cost guardrail (~${fmtUSD0(roundToThousand(priceRCcap))}). Use as justification.`);
+      }
+      document.getElementById('uwLevers').innerHTML = levers.length ? ('• ' + levers.join('<br>• ')) : 'Deal pencils at ask; consider credits, repairs, or short I/O.';
+
+      // Email
+      const subject = `Counter Offer — ${c.propType||'Property'}${c.units?` (${c.units} units)`:''}: ${fmtUSD0(suggested)}`;
+      const lines = [
+        `Subject: ${subject}`,
+        ``,
+        `Hi [Seller/Agent],`,
+        ``,
+        `Thanks for the opportunity to review ${c.propType||'the property'}${c.units?` with ${c.units} units`:''}. After underwriting, we're submitting a counter offer at ${fmtUSD0(suggested)}.`,
+        ``,
+        `Key points:`,
+        `• Year-1 NOI: ${fmtUSD0(NOI)}`,
+        `• DSCR at asking: ${y1.dscr?y1.dscr.toFixed(2)+'×':'—'}; at our counter: ${at.dscr?at.dscr.toFixed(2)+'×':'—'} (target ${targetDSCR.toFixed(2)}×)`,
+        `• Cap rate at ask: ${y1.cap?(y1.cap*100).toFixed(2)+'%':'—'}; at our counter: ${at.cap?(at.cap*100).toFixed(2)+'%':'—'}`,
+        rcTotal ? `• Replacement-cost check: guardrail ≈ ${fmtUSD0(roundToThousand(priceRCcap))}` : null,
+        ``,
+        `Our price aligns with DSCR limits at the quoted terms, a market cap of ${(capPct).toFixed(2)}%, and disciplined replacement-cost benchmarks.`,
+        ``,
+        `If price is firm, alternatives that make the deal work include:`,
+        `• Seller credit toward closing or rate buydown`,
+        `• Short I/O period to improve early coverage`,
+        `• Addressing deferred maintenance that impacts opex`,
+        ``,
+        `Best,`,
+        `[Your Name]`
+      ].filter(Boolean);
+      document.getElementById('uwEmail').value = lines.join('\n');
+    }
+
+    /* ===== Wire up buttons ===== */
+    document.getElementById('uwAnalyzeBtn').addEventListener('click', () => { if (DEAL) suggestCounter(DEAL); });
+    document.getElementById('uwCopyBtn').addEventListener('click', async () => {
+      try { await navigator.clipboard.writeText(document.getElementById('uwEmail').value||''); alert('Email copied ✓'); }
+      catch { alert('Copy failed — select and copy manually.'); }
+    });
+    document.getElementById('btnImportLocal').addEventListener('click', () => {
+      const d = normalizeDeal(readFromCalcLocalStorage());
+      if (!d){ alert('No saved deal found from the calculator.'); return; }
+      DEAL = d; onDealLoaded();
+    });
+    document.getElementById('btnShare').addEventListener('click', async () => {
+      if (!DEAL){ alert('Load a deal first.'); return; }
+      const url = `${location.origin}${location.pathname}?deal=${encodeDeal(DEAL)}`;
+      try { await navigator.clipboard.writeText(url); alert('Share link copied ✓'); }
+      catch { prompt('Copy this link:', url); }
+    });
+
+    function onDealLoaded(){
+      document.getElementById('dealTag').textContent = `${DEAL.propType||'Property'}${DEAL.units?` • ${DEAL.units}u`:''}${DEAL.sqft?` • ${DEAL.sqft}sf`:''}`;
+      suggestCounter(DEAL);
+    }
+
+    /* ===== Init ===== */
+    (function init(){
+      const fromURL = normalizeDeal(readFromURL());
+      if (fromURL) { DEAL = fromURL; onDealLoaded(); return; }
+      const fromLocal = normalizeDeal(readFromCalcLocalStorage());
+      if (fromLocal) { DEAL = fromLocal; onDealLoaded(); return; }
+      // Empty state
+      document.getElementById('dealTag').textContent = 'No deal loaded — use “Import from Calculator”';
+    })();
+  </script>
+</body>
+</html>

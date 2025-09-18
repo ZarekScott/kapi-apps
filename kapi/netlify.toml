@@ -1,0 +1,18 @@
+[build]
+  command = "npm run build"
+  publish = "."
+
+[build.environment]
+  NODE_VERSION = "20"
+
+[[edge_functions]]
+  function = "auth"
+  path = "/apps.html"
+
+[[edge_functions]]
+  function = "auth"
+  path = "/calculators/*"
+
+[[edge_functions]]
+  function = "auth"
+  path = "/community.html"

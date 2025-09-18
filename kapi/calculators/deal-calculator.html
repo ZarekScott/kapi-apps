@@ -1,0 +1,1138 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>Kapi — Deal Calculator · Prestige+</title>
+  <meta name="color-scheme" content="dark light" />
+  <style>
+    /* ===== Prestige+ theme (dark default) ===== */
+    :root{
+      --bg:#0a0f17; --panel:#0e1523; --panel-2:#0b1220; --ink:#e8eef6; --muted:#9ca9bd; --border:#1a2538;
+      --accent:#10b981; --accent-weak: rgba(16,185,129,.16);
+      --good:#10b981; --bad:#ef4444; --warning:#f59e0b;
+      --shadow: 0 0 0px var(--accent), 0 0 8px var(--accent), 0 0 18px var(--accent);
+      --radius:16px; --tip-bg: rgba(7,12,20,.96); --tip-border: #19304f; --btn-ink:#04130e;
+    }
+    [data-theme="light"]{
+      --bg:#f6f8fb; --panel:#ffffff; --panel-2:#f3f5f8; --ink:#0f172a; --muted:#51607a; --border:#e5ebf2;
+      --tip-bg:#ffffff; --tip-border:#dbe3ec; --shadow: 0 0 0px var(--accent), 0 0 10px var(--accent), 0 0 22px var(--accent);
+    }
+    [data-theme="mid"]{
+      --bg:#121823; --panel:#182030; --panel-2:#141c2b; --ink:#e3e8f2; --muted:#9aa6bb; --border:#243149;
+      --tip-bg:#1a2333; --tip-border:#2a3a55; --shadow: 0 0 0px var(--accent), 0 0 9px var(--accent), 0 0 20px var(--accent);
+    }
+    *{box-sizing:border-box}
+    body{margin:0;background:var(--bg);color:var(--ink);font-family:Inter,system-ui,-apple-system,Segoe UI,Roboto,Helvetica,Arial,sans-serif}
+    .wrap{max-width:1200px;margin:0 auto;padding:24px}
+    header{display:flex;align-items:center;justify-content:space-between;margin-bottom:16px}
+    .brand{display:flex;align-items:center;gap:12px}
+    .k{width:44px;height:44px;border-radius:14px;background:
+        radial-gradient(40% 40% at 70% 30%, var(--accent-weak), transparent 60%),
+        linear-gradient(140deg, transparent 40%, var(--accent-weak));
+      border:1px solid var(--accent);box-shadow:var(--shadow);
+      position:relative;overflow:hidden;display:flex;align-items:center;justify-content:center;}
+    .k-mark{position:relative; z-index:1; display:flex; align-items:center; gap:4px;}
+    .k-letter{font-weight:900; font-size:22px; color:var(--accent); text-shadow:0 0 6px var(--accent-weak), 0 0 10px var(--accent-weak)}
+    [data-theme="mid"] .k-letter{color:#ffffff; text-shadow:0 0 6px rgba(255,255,255,.3), 0 0 10px rgba(255,255,255,.45)}
+    .controls{display:flex;align-items:center;gap:10px;flex-wrap:wrap}
+    .btn,.chip{border:1px solid var(--border);border-radius:12px;background:transparent;color:var(--ink);padding:8px 12px;font-weight:700;cursor:pointer;text-decoration:none}
+    .btn.primary{background:var(--accent);color:var(--btn-ink);border-color:transparent;box-shadow:var(--shadow)}
+    a{color:var(--accent)}
+    .grid{display:grid;grid-template-columns:1.15fr .85fr;gap:16px}
+    @media (max-width:980px){ .grid{grid-template-columns:1fr} }
+    .panel{background:linear-gradient(180deg,var(--panel),var(--panel-2));border:1px solid var(--border);border-radius:var(--radius);padding:16px}
+    h2{margin:0 0 10px 0}
+    .muted{color:var(--muted)}
+    .hr{height:1px;background:var(--border);margin:10px 0}
+    .row{display:grid;grid-template-columns:repeat(12,1fr);gap:10px}
+    .field{display:flex;flex-direction:column;gap:6px;grid-column: span 6; position:relative}
+    .field.sm{grid-column: span 3} .field.md{grid-column: span 4} .field.lg{grid-column: span 8} .field.full{grid-column:1/-1}
+    label{font-size:12px;color:var(--muted);display:flex;align-items:center;gap:8px}
+    input,select{padding:10px 12px;border-radius:12px;border:1px solid var(--border);background:transparent;color:inherit}
+    input[type="number"]::-webkit-outer-spin-button,input[type="number"]::-webkit-inner-spin-button{-webkit-appearance:none;margin:0}
+    body:not([data-theme="light"]) select{color:#c7cfdd} body:not([data-theme="light"]) option{color:#c7cfdd;background:#0e1523}
+    .lamp{display:flex;align-items:center;gap:10px}
+    .dot{width:14px;height:14px;border-radius:999px;border:2px solid var(--border)}
+    .dot.good{background:var(--good);box-shadow:0 0 10px var(--good),0 0 18px var(--good)}
+    .dot.bad{background:var(--bad);box-shadow:0 0 10px var(--bad),0 0 18px var(--bad)}
+    .kpis{display:grid;grid-template-columns:repeat(5,1fr);gap:10px;margin-bottom:12px}
+    @media (max-width:1000px){ .kpis{grid-template-columns:repeat(2,1fr)} }
+    .kpi{background:var(--panel-2);border:1px solid var(--border);border-radius:14px;padding:12px}
+    .kpi .label{font-size:12px;color:var(--muted)} .kpi .value{font-size:22px;font-weight:900}
+    .tag{display:inline-block;padding:2px 8px;border-radius:999px;border:1px solid var(--border);background:var(--panel-2);font-size:12px}
+    .mini{font-size:12px;color:var(--muted)}
+    .pill{display:inline-flex;gap:8px;align-items:center;padding:6px 10px;border:1px dashed var(--border);border-radius:999px;background:rgba(16,185,129,.12)}
+    .flag{display:inline-flex;gap:6px;align-items:center;border:1px solid var(--border);border-radius:10px;padding:6px 10px}
+
+    /* Help tooltips */
+    .help{position:absolute;left:0;bottom:100%;transform:translateY(8px);max-width:min(420px,90vw);background:var(--tip-bg);color:var(--ink);
+      border:1px solid var(--tip-border);border-radius:10px;padding:8px 10px;box-shadow:0 6px 24px rgba(0,0,0,.35);font-size:12px;line-height:1.35;
+      opacity:0;pointer-events:none;transition:opacity .15s ease, transform .15s ease;z-index:5;display:block}
+    .help::after{content:"";position:absolute;left:12px;top:100%;border:6px solid transparent;border-top-color:var(--tip-bg);filter:drop-shadow(0 -1px 0 var(--tip-border))}
+    body[data-help="1"] .field:hover .help, body[data-help="1"] .field:focus-within .help{opacity:1;transform:translateY(0);pointer-events:auto}
+    body[data-help="0"] .help{display:none}
+
+    /* Modal */
+    .modal-backdrop{position:fixed;inset:0;background:rgba(0,0,0,.5);display:none;align-items:center;justify-content:center;z-index:11000}
+    .modal{background:var(--panel);border:1px solid var(--border);border-radius:16px;padding:16px;width:min(520px,92vw);box-shadow:0 20px 60px rgba(0,0,0,.35)}
+    .modal h3{margin:0 0 8px 0} .modal p{margin:0 0 12px 0;color:var(--muted)} .modal .actions{display:flex;gap:10px;justify-content:flex-end}
+    .modal .actions .btn{font-weight:800} .show{display:flex!important}
+
+    /* Accent swatches */
+    #accentList{display:grid !important; grid-template-columns: repeat(5, 28px); gap:8px; align-items:center}
+    #accentList .sw{width:28px; height:28px; border-radius:8px; border:1px solid var(--border); background: var(--sw, transparent); cursor:pointer}
+  </style>
+</head>
+<body>
+  <div class="wrap">
+    <header>
+      <div class="brand">
+        <div class="k" aria-hidden="true"><span class="k-mark"><span class="k-letter">K</span></span></div>
+      </div>
+      <div class="controls">
+        <a class="chip" href="funnel.html" title="Home">🏠 Home</a>
+        <span class="badge">Theme</span>
+        <button class="chip" id="themeToggle" aria-label="Toggle theme">🌙</button>
+
+        <span class="badge">Accent</span>
+        <div class="legend" id="accentList">
+          <button class="sw" data-key="emerald"  style="--sw:#10b981" title="Emerald"></button>
+          <button class="sw" data-key="lime"     style="--sw:#3f6212" title="Lime (Green)"></button>
+          <button class="sw" data-key="cyan"     style="--sw:#22d3ee" title="Cyan"></button>
+          <button class="sw" data-key="fuchsia"  style="--sw:#e879f9" title="Fuchsia"></button>
+          <button class="sw" data-key="purple"   style="--sw:#a78bfa" title="Purple"></button>
+          <button class="sw" data-key="amber"    style="--sw:#f59e0b" title="Amber"></button>
+          <button class="sw" data-key="azure"    style="--sw:#2563eb" title="Azure"></button>
+          <button class="sw" data-key="rose"     style="--sw:#db2777" title="Rose"></button>
+          <button class="sw" data-key="magenta"  style="--sw:#a21caf" title="Magenta (deep)"></button>
+          <button class="sw" data-key="graphite-smart" title="Smart Black/White"></button>
+        </div>
+
+        <label class="badge"><input type="checkbox" id="helpMode" style="accent-color:var(--accent)"> Help mode</label>
+        <button class="btn primary" id="btnExport">Export Lender PDF</button>
+<script>
+  document.getElementById('btnExport')?.addEventListener('click', () => window.exportPDF?.());
+</script>
+<script>
+  // Load a script tag and await it
+  function loadScript(src) {
+    return new Promise((resolve, reject) => {
+      const s = document.createElement('script');
+      s.src = src;
+      s.defer = true;
+      s.onload = resolve;
+      s.onerror = () => reject(new Error('Failed to load ' + src));
+      document.head.appendChild(s);
+    });
+  }
+
+  // Ensure jsPDF + AutoTable exist; load if missing
+  async function ensurePDFLibs() {
+    // 1) jsPDF UMD
+    if (!window.jspdf || !window.jspdf.jsPDF) {
+      await loadScript('https://cdn.jsdelivr.net/npm/jspdf@2.5.1/dist/jspdf.umd.min.js');
+    }
+    const { jsPDF } = window.jspdf || {};
+    if (!jsPDF) {
+      alert('Missing jsPDF. Check the CDN connectivity.');
+      return null;
+    }
+
+    // 2) AutoTable plugin (adds doc.autoTable)
+    // Some builds expose as jsPDF.API.autoTable, some attach to doc instances.
+    if (!jsPDF.API?.autoTable) {
+      await loadScript('https://cdn.jsdelivr.net/npm/jspdf-autotable@3.5.28/dist/jspdf.plugin.autotable.min.js');
+    }
+    // Final verification: create a doc and see if autoTable is on it
+    const probe = new jsPDF();
+    if (typeof probe.autoTable !== 'function') {
+      alert('Missing jsPDF-AutoTable. Check the plugin script or network.');
+      return null;
+    }
+    return jsPDF;
+  }
+
+  // === Your exporter ===
+  window.exportPDF = async function exportPDF() {
+    const jsPDF = await ensurePDFLibs();
+    if (!jsPDF) return;
+
+    // Pull values from the live calculator
+    const get = id => (document.getElementById(id)?.value ?? '—');
+    const money = v => String(v ?? '—');
+
+    const doc = new jsPDF({ unit: 'pt', format: 'letter' });
+
+    // Header
+    const accent = getComputedStyle(document.documentElement).getPropertyValue('--accent').trim() || '#10b981';
+    doc.setFont('helvetica', 'bold');
+    doc.setFontSize(16);
+    doc.setTextColor(20, 24, 31);
+    doc.text('Kapi — Lender Summary', 40, 48);
+    doc.setDrawColor(0);
+    doc.setFillColor(accent);
+    doc.rect(40, 58, 535, 2, 'F');
+
+    // Summary KPIs band
+    const kpis = [
+      ['NOI (annual)', document.getElementById('noi')?.value || '—'],
+      ['Cash Flow (annual)', document.getElementById('annCF')?.value || '—'],
+      ['DSCR', document.getElementById('dscr')?.value || '—'],
+      ['Cap Rate', document.getElementById('cap')?.value || '—'],
+      ['Cash-on-Cash', document.getElementById('coc')?.value || '—'],
+    ];
+
+    doc.setFont('helvetica', 'normal');
+    doc.setFontSize(10);
+    doc.text(`Generated: ${new Date().toLocaleString()}`, 40, 76);
+
+    // Tables
+    const topMargin = 96;
+
+    const basics = [
+      ['Property Type', get('propType')],
+      ['Lease Type', get('leaseType')],
+      ['Units', get('units')],
+      ['Square Footage', get('sqft')],
+      ['Purchase Price', get('price')],
+    ];
+
+    const financing = [
+      ['Down Payment %', get('downPct')],
+      ['Closing Costs %', get('closePct')],
+      ['Upfront CapEx ($)', get('reno')],
+      ['Loan Type', get('loanType')],
+      ['Interest Rate %', get('rate')],
+      ['Term (years)', get('termYears')],
+      ['I/O Period (months)', get('ioMonths')],
+      ['Loan Amount', get('loanAmt')],
+      ['Upfront Cash Invested', get('upfront')],
+      ['LTV', get('ltv')],
+      ['LTC', get('ltc')],
+    ];
+
+    const income = [
+      ['Monthly Rent ($)', get('rent')],
+      ['Other Income / mo ($)', get('otherInc')],
+      ['Vacancy %', get('vacancy')],
+      ['EGI (annual)', get('egi')],
+    ];
+
+    const expenses = (() => {
+      const mode = get('expMode');
+      if (mode.startsWith('Ratio')) {
+        return [
+          ['Expense Mode', mode],
+          ['Expense Ratio %', get('expRatio')],
+          ['Operating Expenses (annual)', get('opex')],
+        ];
+      }
+      return [
+        ['Expense Mode', mode],
+        ['Taxes / mo', get('taxes')],
+        ['Insurance / mo', get('ins')],
+        ['Utilities / mo', get('utils')],
+        ['Repairs/CapEx reserve / mo', get('repairs')],
+        ['Mgmt fee % of EGI', get('mgmtPct')],
+        ['HOA / mo', get('hoa')],
+        ['Operating Expenses (annual)', get('opex')],
+      ];
+    })();
+
+    const results = [
+      ['NOI', get('noi')],
+      ['Annual Debt Service', get('annDebt')],
+      ['Cash Flow (annual)', get('annCF')],
+      ['DSCR', get('dscr')],
+      ['Cap Rate', get('cap')],
+      ['Cash-on-Cash', get('coc')],
+      ['Break-even Occupancy', get('beOcc')],
+      ['Price / Unit', get('ppu')],
+      ['Price / SF', get('ppsf')],
+    ];
+
+    // kpi row
+    const kpiStartY = topMargin;
+    const kpiColW = 535 / kpis.length;
+    doc.setFont('helvetica', 'bold'); doc.setFontSize(10);
+    kpis.forEach(([label, value], i) => {
+      const x = 40 + i * kpiColW;
+      doc.setDrawColor(225); doc.setFillColor(247); // light fill
+      doc.roundedRect(x, kpiStartY, kpiColW - 6, 46, 6, 6, 'S');
+      doc.setFont('helvetica', 'normal'); doc.setTextColor(110);
+      doc.text(label, x + 10, kpiStartY + 16);
+      doc.setFont('helvetica', 'bold'); doc.setTextColor(20);
+      doc.setFontSize(12);
+      doc.text(String(value || '—'), x + 10, kpiStartY + 34);
+    });
+
+    // AutoTable sections
+    const startTablesY = kpiStartY + 66;
+
+    const { autoTable } = doc;
+
+    autoTable.call(doc, {
+      startY: startTablesY,
+      head: [['Basics', 'Value']],
+      body: basics,
+      theme: 'grid',
+      styles: { font: 'helvetica', fontSize: 10, cellPadding: 6 },
+      headStyles: { fillColor: [16, 185, 129], textColor: 255 },
+      columnStyles: { 0: { cellWidth: 220 }, 1: { cellWidth: 315 } },
+      margin: { left: 40, right: 40 },
+    });
+
+    autoTable.call(doc, {
+      startY: doc.lastAutoTable.finalY + 12,
+      head: [['Financing', 'Value']],
+      body: financing,
+      theme: 'grid',
+      styles: { font: 'helvetica', fontSize: 10, cellPadding: 6 },
+      headStyles: { fillColor: [16, 185, 129], textColor: 255 },
+      columnStyles: { 0: { cellWidth: 220 }, 1: { cellWidth: 315 } },
+      margin: { left: 40, right: 40 },
+    });
+
+    autoTable.call(doc, {
+      startY: doc.lastAutoTable.finalY + 12,
+      head: [['Income', 'Value']],
+      body: income,
+      theme: 'grid',
+      styles: { font: 'helvetica', fontSize: 10, cellPadding: 6 },
+      headStyles: { fillColor: [16, 185, 129], textColor: 255 },
+      columnStyles: { 0: { cellWidth: 220 }, 1: { cellWidth: 315 } },
+      margin: { left: 40, right: 40 },
+    });
+
+    autoTable.call(doc, {
+      startY: doc.lastAutoTable.finalY + 12,
+      head: [['Expenses', 'Value']],
+      body: expenses,
+      theme: 'grid',
+      styles: { font: 'helvetica', fontSize: 10, cellPadding: 6 },
+      headStyles: { fillColor: [16, 185, 129], textColor: 255 },
+      columnStyles: { 0: { cellWidth: 220 }, 1: { cellWidth: 315 } },
+      margin: { left: 40, right: 40 },
+    });
+
+    autoTable.call(doc, {
+      startY: doc.lastAutoTable.finalY + 12,
+      head: [['Results (Year-1)', 'Value']],
+      body: results,
+      theme: 'grid',
+      styles: { font: 'helvetica', fontSize: 10, cellPadding: 6 },
+      headStyles: { fillColor: [16, 185, 129], textColor: 255 },
+      columnStyles: { 0: { cellWidth: 220 }, 1: { cellWidth: 315 } },
+      margin: { left: 40, right: 40 },
+    });
+
+    // Optional: 10-Year Projection table from your DOM
+    const projRows = Array.from(document.querySelectorAll('#projBody tr')).map(tr =>
+      Array.from(tr.children).map(td => td.textContent)
+    );
+    if (projRows.length) {
+      autoTable.call(doc, {
+        startY: doc.lastAutoTable.finalY + 16,
+        head: [['Year','EGI','Opex','NOI','Debt','CF','DSCR','Value @ Exit Cap']],
+        body: projRows,
+        theme: 'grid',
+        styles: { font: 'helvetica', fontSize: 9, cellPadding: 4 },
+        headStyles: { fillColor: [16, 185, 129], textColor: 255 },
+        margin: { left: 40, right: 40 },
+      });
+    }
+
+    doc.save('kapi_lender_summary.pdf');
+  };
+</script>
+
+      </div>
+    </header>
+
+    <section class="kpis" id="kpis">
+      <div class="kpi"><div class="label">NOI (annual)</div><div class="value" id="kpiNOI">—</div></div>
+      <div class="kpi"><div class="label">Cash Flow (annual)</div><div class="value" id="kpiCF">—</div></div>
+      <div class="kpi"><div class="label">DSCR</div><div class="value" id="kpiDSCR">—</div></div>
+      <div class="kpi"><div class="label">Cap Rate</div><div class="value" id="kpiCap">—</div></div>
+      <div class="kpi"><div class="label">Cash-on-Cash</div><div class="value" id="kpiCoC">—</div></div>
+    </section>
+
+    <div class="grid">
+      <!-- LEFT: Inputs -->
+      <section class="panel">
+        <div style="display:flex;align-items:center;justify-content:space-between">
+          <h2>Deal Basics</h2>
+          <div class="lamp"><span id="signalDot" class="dot"></span><span id="signalText" class="muted">—</span></div>
+        </div>
+
+        <div class="row">
+          <div class="field md">
+            <label>Property type <span class="pill">MF · SFH · Retail · Office · Industrial</span></label>
+            <select id="propType">
+              <option>Multifamily</option><option>Single-family</option><option>Retail</option><option>Office</option><option>Industrial</option>
+            </select>
+            <div class="help">Sets typical defaults for vacancy & expenses.</div>
+          </div>
+          <div class="field md">
+            <label>Lease type <span class="pill">NNN · MG · Gross</span></label>
+            <select id="leaseType"><option>NNN</option><option>Modified Gross</option><option>Gross</option></select>
+            <div class="help">NNN: tenant pays most opex; MG/Gross: landlord pays some/all.</div>
+          </div>
+          <div class="field md"><label>Units</label><input id="units" type="number" min="0" step="1" value="6"><div class="help">Used for $/door.</div></div>
+          <div class="field md"><label>Square footage (SF)</label><input id="sqft" type="number" min="0" step="50" value="5200"><div class="help">Used for $/SF.</div></div>
+          <div class="field md"><label>Purchase price ($)</label><input id="price" type="number" min="0" step="1000" value="525000"><div class="help">Contract price.</div></div>
+        </div>
+
+        <div class="hr"></div>
+        <h2>Income</h2>
+        <div class="row">
+          <div class="field md"><label>Monthly rent ($)</label><input id="rent" type="number" min="0" step="50" value="6200"><div class="help">Total scheduled rent per month.</div></div>
+          <div class="field md"><label>Other income / month ($)</label><input id="otherInc" type="number" min="0" step="10" value="250"><div class="help">Parking, laundry, reimbursements, etc.</div></div>
+          <div class="field md"><label>Vacancy (%)</label><input id="vacancy" type="number" min="0" max="100" step="0.5" value="6"><div class="help">Economic vacancy allowance.</div></div>
+        </div>
+
+        <div class="hr"></div>
+        <h2>Expenses</h2>
+        <div class="row">
+          <div class="field md">
+            <label>Expense mode</label>
+            <select id="expMode"><option>Ratio (%)</option><option>Advanced (itemized)</option></select>
+            <div class="help">Use a simple ratio or itemize below.</div>
+          </div>
+          <div class="field md" id="expRatioBox">
+            <label>Expense ratio (%)</label>
+            <input id="expRatio" type="number" min="0" max="100" step="1" value="35">
+            <div class="help">MF 35–50%, SFH 20–30%, Retail 15–25% (starting points).</div>
+          </div>
+        </div>
+        <div id="advWrap" style="display:none">
+          <div class="row" style="margin-top:8px">
+            <div class="field md"><label>Taxes / mo ($)</label><input id="taxes" type="number" min="0" step="10" value="420"><div class="help">Annualized in results.</div></div>
+            <div class="field md"><label>Insurance / mo ($)</label><input id="ins" type="number" min="0" step="10" value="190"><div class="help">Annualized in results.</div></div>
+            <div class="field md"><label>Utilities / mo ($)</label><input id="utils" type="number" min="0" step="10" value="120"><div class="help">Owner-paid utilities only.</div></div>
+            <div class="field md"><label>Repairs/CapEx reserve / mo ($)</label><input id="repairs" type="number" min="0" step="10" value="250"><div class="help">Ongoing reserve; not upfront CapEx.</div></div>
+            <div class="field md"><label>Mgmt fee (% of EGI)</label><input id="mgmtPct" type="number" min="0" step="0.5" value="7"><div class="help">Typical 5–10%.</div></div>
+            <div class="field md"><label>HOA/Other / mo ($)</label><input id="hoa" type="number" min="0" step="10" value="0"><div class="help">HOA, landscaping, security, etc.</div></div>
+          </div>
+        </div>
+
+        <div class="hr"></div>
+        <h2>Financing & Transaction</h2>
+        <div class="row">
+          <div class="field md"><label>Loan type</label><select id="loanType"><option>Amortizing</option><option>Interest Only</option></select><div class="help">I/O lowers payment, no principal reduction.</div></div>
+          <div class="field md"><label>Interest rate (% APR)</label><input id="rate" type="number" min="0" step="0.05" value="6.75"><div class="help">APR.</div></div>
+          <div class="field md"><label>Term (years)</label><input id="termYears" type="number" min="0" step="1" value="30"><div class="help">Amortization period.</div></div>
+          <div class="field md"><label>I/O period (months)</label><input id="ioMonths" type="number" min="0" step="1" value="0"><div class="help">Months of interest-only.</div></div>
+          <div class="field md"><label>Down payment (%)</label><input id="downPct" type="number" min="0" max="100" step="0.5" value="25"><div class="help">Equity at close; lowers leverage.</div></div>
+          <div class="field md"><label>Closing costs (%)</label><input id="closePct" type="number" min="0" step="0.1" value="3"><div class="help">Typical 2–4% of price.</div></div>
+          <div class="field md"><label>Upfront CapEx / Renovation ($)</label><input id="reno" type="number" min="0" step="500" value="15000"><div class="help">One-time improvements at/after closing.</div></div>
+        </div>
+
+        <div class="hr"></div>
+        <h2>Projection Assumptions</h2>
+        <div class="row">
+          <div class="field md"><label>Rent growth / yr (%)</label><input id="gRent" type="number" min="0" step="0.25" value="3"></div>
+          <div class="field md"><label>Other income growth / yr (%)</label><input id="gOther" type="number" min="0" step="0.25" value="2"></div>
+          <div class="field md"><label>Opex growth / yr (%)</label><input id="gOpex" type="number" min="0" step="0.25" value="2.5"></div>
+          <div class="field md"><label>Exit cap rate (%)</label><input id="exitCap" type="number" min="0" step="0.1" value="7.0"></div>
+        </div>
+
+        <div class="hr"></div>
+        <h2>Targets</h2>
+        <div class="row">
+          <div class="field md"><label>Min DSCR</label><input id="targetDSCR" type="number" min="0" step="0.05" value="1.20"><div class="help">Common lender floor ≥ 1.20×.</div></div>
+          <div class="field md"><label>Min Cash-on-Cash (%)</label><input id="targetCoC" type="number" min="0" step="0.5" value="8"><div class="help">Investor hurdle.</div></div>
+          <div class="field md"><label>Max LTV (%)</label><input id="targetLTV" type="number" min="0" step="1" value="80"><div class="help">Loan-to-value limit.</div></div>
+          <div class="field md"><label>&nbsp;</label><div class="flag"><span id="flagDSCR" class="muted">DSCR —</span></div></div>
+        </div>
+
+        <div class="hr"></div>
+        <div class="row">
+          <div class="field md"><label>Sample</label><button class="btn" id="openUW">Underwrite in Pro</button>
+<button class="btn" id="btnSample">Load example</button></div>
+          <div class="field md"><label>Persistence</label><button class="btn" id="btnSave">Save inputs</button></div>
+          <div class="field md"><label>&nbsp;</label><button class="btn" id="btnReset">Reset</button></div>
+        </div>
+      </section>
+
+      <!-- RIGHT: Results + Value-Add + Projection -->
+      <section class="panel">
+        <h2>Results (Year-1)</h2>
+        <div class="hr"></div>
+        <div class="row">
+          <div class="field md"><label>Upfront cash invested</label><input id="upfront" disabled></div>
+          <div class="field md"><label>Loan amount</label><input id="loanAmt" disabled></div>
+          <div class="field md"><label>Monthly debt service</label><input id="moDebt" disabled></div>
+          <div class="field md"><label>Annual debt service</label><input id="annDebt" disabled></div>
+          <div class="field md"><label>Effective Gross Income (EGI)</label><input id="egi" disabled></div>
+          <div class="field md"><label>Operating expenses</label><input id="opex" disabled></div>
+          <div class="field md"><label>NOI</label><input id="noi" disabled></div>
+          <div class="field md"><label>Cash flow</label><input id="annCF" disabled></div>
+          <div class="field md"><label>DSCR</label><input id="dscr" disabled></div>
+          <div class="field md"><label>Cap rate</label><input id="cap" disabled></div>
+          <div class="field md"><label>Cash-on-Cash</label><input id="coc" disabled></div>
+          <div class="field md"><label>Break-even occupancy</label><input id="beOcc" disabled></div>
+          <div class="field md"><label>LTV (Loan / Price)</label><input id="ltv" disabled></div>
+          <div class="field md"><label>LTC (Loan /(Price+CapEx+Closing))</label><input id="ltc" disabled></div>
+          <div class="field md"><label>Price / Unit</label><input id="ppu" disabled></div>
+          <div class="field md"><label>Price / SF</label><input id="ppsf" disabled></div>
+        </div>
+
+        <div class="hr"></div>
+        <div style="display:flex;align-items:center;justify-content:space-between;gap:8px">
+          <h2>Value-Add Simulator</h2><span class="tag">What if we upgrade?</span>
+        </div>
+        <div class="hr"></div>
+        <div class="row">
+          <div class="field md"><label>Years out (1–10)</label><input id="vaYears" type="number" min="1" max="10" step="1" value="3"><div class="help">Horizon to measure NOI lift & value.</div></div>
+          <div class="field md"><label>Units affected</label><input id="vaUnits" type="number" min="0" step="1" value="6"><div class="help">How many units get the upgrades.</div></div>
+          <div class="field md"><label>Rent uplift / unit / mo ($)</label><input id="vaRentUplift" type="number" min="0" step="10" value="75"><div class="help">Renovations, finishes, etc.</div></div>
+          <div class="field md"><label>Amenities & other / unit / mo ($)</label><input id="vaOtherUplift" type="number" min="0" step="5" value="25"><div class="help">Appliances, valet trash, parking.</div></div>
+          <div class="field md"><label>Extra opex / mo (total) ($)</label><input id="vaOpexDelta" type="number" min="0" step="10" value="0"><div class="help">New servicing costs, utilities, etc.</div></div>
+          <div class="field md"><label>CapEx (one-time) ($)</label><input id="vaCapex" type="number" min="0" step="500" value="30000"><div class="help">Renovation budget to enable uplift.</div></div>
+          <div class="field md"><label>Cap rate for value (%)</label><input id="vaCap" type="number" min="1" step="0.1" value="7.0"><div class="help">Used to convert NOI lift to value.</div></div>
+          <div class="field md"><label><input id="vaGrow" type="checkbox" checked style="accent-color:var(--accent)"> Grow uplift w/ rent growth</label><div class="help">If checked, uplift compounds at rent growth.</div></div>
+        </div>
+
+        <div class="hr"></div>
+        <div class="row">
+          <div class="field md"><label>Added NOI (Yr-1 of uplift)</label><input id="vaNOI1" disabled></div>
+          <div class="field md"><label>Added NOI (Target Year)</label><input id="vaNOIN" disabled></div>
+          <div class="field md"><label>Implied Value Added</label><input id="vaValue" disabled></div>
+          <div class="field md"><label>Payback (yrs est.)</label><input id="vaPayback" disabled></div>
+        </div>
+
+        <div class="hr"></div>
+        <div style="display:flex;align-items:center;justify-content:space-between;gap:8px">
+          <h2>10-Year Projection</h2>
+          <span class="mini">Assumes constant vacancy & loan rate; I/O transitions are handled per year.</span>
+        </div>
+        <div class="hr"></div>
+        <div class="field full">
+          <div style="overflow:auto">
+            <table>
+              <thead>
+                <tr><th>Year</th><th>EGI</th><th>Opex</th><th>NOI</th><th>Debt</th><th>CF</th><th>DSCR</th><th>Value @ Exit Cap</th></tr>
+              </thead>
+              <tbody id="projBody"></tbody>
+            </table>
+          </div>
+        </div>
+      </section>
+    </div>
+  </div>
+
+  <!-- Reset confirmation modal -->
+  <div class="modal-backdrop" id="resetModal">
+    <div class="modal" role="dialog" aria-modal="true" aria-labelledby="resetTitle">
+      <h3 id="resetTitle">Reset all inputs?</h3>
+      <p>This will <strong>clear every numeric field</strong> and remove your saved inputs. This cannot be undone.</p>
+      <div class="actions">
+        <button class="btn" id="cancelReset">Cancel</button>
+        <button class="btn primary" id="confirmReset">Yes, reset</button>
+
+      </div>
+    </div>
+  </div>
+
+  <script>
+    const $ = id => document.getElementById(id);
+    const money0 = n => '$'+(n||0).toLocaleString(undefined,{maximumFractionDigits:0});
+    const money  = n => (n<0?'-':'')+'$'+Math.abs(n||0).toLocaleString(undefined,{maximumFractionDigits:0});
+
+    /* ===== Theme + Accent (3-state) ===== */
+    const themeToggle = $('themeToggle'); const THEMES = ['dark','mid','light'];
+    const ACCENTS = {
+      emerald:{dark:'#10b981',mid:'#10b981',light:'#10b981'},
+      lime:{dark:'#3f6212',mid:'#3f6212',light:'#3f6212'},
+      cyan:{dark:'#22d3ee',mid:'#22d3ee',light:'#22d3ee'},
+      fuchsia:{dark:'#e879f9',mid:'#e879f9',light:'#e879f9'},
+      purple:{dark:'#a78bfa',mid:'#a78bfa',light:'#a78bfa'},
+      amber:{dark:'#f59e0b',mid:'#f59e0b',light:'#f59e0b'},
+      azure:{dark:'#2563eb',mid:'#2563eb',light:'#2563eb'},
+      rose:{dark:'#db2777',mid:'#db2777',light:'#db2777'},
+      magenta:{dark:'#a21caf',mid:'#a21caf',light:'#a21caf'},
+      'graphite-smart':{dark:'#ffffff',mid:'#000000',light:'#111827'}
+    };
+    function currentTheme(){ return document.body.getAttribute('data-theme') || 'dark'; }
+    function setTheme(next){
+      if (next==='dark') document.body.removeAttribute('data-theme'); else document.body.setAttribute('data-theme', next);
+      localStorage.setItem('kapi.theme', next);
+      themeToggle.textContent = next==='light' ? '🌞' : (next==='mid' ? '☁️' : '🌙');
+      reapplyAccent(); paintSwatches();
+    }
+    function cycleTheme(){ const idx = THEMES.indexOf(currentTheme()); setTheme(THEMES[(idx+1)%THEMES.length]); }
+    function migrateAccentKey(key){ return key==='white' ? 'graphite-smart' : (ACCENTS[key]?key:'emerald'); }
+    function setAccentForTheme(keyRaw){
+      const key = migrateAccentKey(keyRaw);
+      const theme = currentTheme();
+      const hex = (ACCENTS[key] && ACCENTS[key][theme]) || ACCENTS['emerald'][theme];
+      document.documentElement.style.setProperty('--accent', hex);
+      document.documentElement.style.setProperty('--accent-weak', hex + '28');
+      const whiteInk = (key === 'graphite-smart' && (theme==='light' || theme==='mid')) ? '#ffffff' : '#04130e';
+      document.documentElement.style.setProperty('--btn-ink', whiteInk);
+      localStorage.setItem('kapi.accentKey', key);
+    }
+    function reapplyAccent(){ setAccentForTheme(localStorage.getItem('kapi.accentKey') || 'emerald'); }
+    function paintSwatches(){
+      const theme = currentTheme();
+      document.querySelectorAll('#accentList .sw').forEach(btn => {
+        const key = btn.dataset.key; const map = ACCENTS[key];
+        btn.style.boxShadow = '';
+        if (key === 'graphite-smart'){
+          const col = theme==='dark' ? '#ffffff' : '#000000';
+          btn.style.background = col;
+          if (col === '#000000') btn.style.boxShadow = 'inset 0 0 0 2px rgba(255,255,255,.25)';
+        } else if (map){
+          btn.style.background = map[theme];
+        } else {
+          const css = getComputedStyle(btn).getPropertyValue('--sw');
+          if (css) btn.style.background = css.toString().trim();
+        }
+      });
+    }
+    function loadTheme(){ const t = localStorage.getItem('kapi.theme')||'dark'; setTheme(t); reapplyAccent(); paintSwatches(); }
+    themeToggle.addEventListener('click', cycleTheme);
+    document.addEventListener('DOMContentLoaded', () => {
+      document.querySelectorAll('#accentList .sw').forEach(btn => btn.addEventListener('click', () => setAccentForTheme(btn.dataset.key)));
+    });
+
+    /* ===== Help mode ===== */
+    const helpToggle = $('helpMode');
+    function setHelp(on){ document.body.setAttribute('data-help', on ? '1' : '0'); localStorage.setItem('kapi.help', on?'1':'0'); }
+    const savedHelp = localStorage.getItem('kapi.help')==='1'; setHelp(savedHelp); helpToggle.checked = savedHelp;
+    helpToggle.addEventListener('change', e=>setHelp(!!e.target.checked));
+
+    /* ===== Expense mode ===== */
+    const expMode = $('expMode'), advWrap = $('advWrap'), expRatioBox = $('expRatioBox');
+    function updateExpMode(){ const adv = expMode.value.includes('Advanced'); advWrap.style.display = adv?'block':'none'; expRatioBox.style.display = adv?'none':'block'; }
+    expMode.addEventListener('change', updateExpMode); updateExpMode();
+
+    /* ===== Persistence ===== */
+    const inputs = ['propType','leaseType','units','sqft','price','downPct','closePct','reno','rent','otherInc','vacancy','expMode','expRatio','taxes','ins','utils','repairs','mgmtPct','hoa','loanType','rate','termYears','ioMonths','targetDSCR','targetCoC','targetLTV','gRent','gOther','gOpex','exitCap','vaYears','vaUnits','vaRentUplift','vaOtherUplift','vaOpexDelta','vaCapex','vaCap'];
+    function saveInputs(){ const data = {}; inputs.forEach(id=>data[id] = $(id).value); localStorage.setItem('kapi.prestige.inputs', JSON.stringify(data)); }
+    function loadInputs(){ try{ const data = JSON.parse(localStorage.getItem('kapi.prestige.inputs')||'{}'); inputs.forEach(id=>{ if (data[id]!==undefined) $(id).value = data[id]; }); updateExpMode(); }catch{} }
+    $('btnSave').addEventListener('click', ()=>{ saveInputs(); alert('Saved ✓'); });
+
+    /* ===== Sample ===== */
+    $('btnSample').addEventListener('click', ()=>{
+      $('propType').value='Multifamily'; $('leaseType').value='Modified Gross';
+      $('units').value=6; $('sqft').value=5200; $('price').value=525000;
+      $('downPct').value=25; $('closePct').value=3; $('reno').value=15000;
+      $('rent').value=6200; $('otherInc').value=250; $('vacancy').value=6;
+      $('expMode').value='Advanced (itemized)'; updateExpMode();
+      $('taxes').value=420; $('ins').value=190; $('utils').value=120; $('repairs').value=250; $('mgmtPct').value=7; $('hoa').value=0;
+      $('loanType').value='Amortizing'; $('rate').value=6.75; $('termYears').value=30; $('ioMonths').value=0;
+      $('gRent').value=3; $('gOther').value=2; $('gOpex').value=2.5; $('exitCap').value=7.0;
+      $('targetDSCR').value=1.20; $('targetCoC').value=8; $('targetLTV').value=80;
+      $('vaYears').value=3; $('vaUnits').value=6; $('vaRentUplift').value=75; $('vaOtherUplift').value=25; $('vaOpexDelta').value=0; $('vaCapex').value=30000; $('vaCap').value=7.0;
+      analyze();
+    });
+
+    /* ===== Reset ===== */
+    const resetModal = $('resetModal'); const confirmResetBtn = $('confirmReset'); const cancelResetBtn = $('cancelReset');
+    function anyDataEntered(){ const saved = !!localStorage.getItem('kapi.prestige.inputs'); let anyFilled = false;
+      document.querySelectorAll('input[type="number"]').forEach(el=>{ const raw = (el.value ?? '').toString().trim(); if (raw !== '') anyFilled = true; });
+      return saved || anyFilled; }
+    function openResetModal(){ resetModal.classList.add('show'); } function closeResetModal(){ resetModal.classList.remove('show'); }
+    function clearInputs(){ document.querySelectorAll('input[type="number"]').forEach(el=>{ el.value = ''; });
+      localStorage.removeItem('kapi.prestige.inputs'); updateExpMode(); analyze(); }
+    $('btnReset').addEventListener('click', ()=>{ anyDataEntered() ? openResetModal() : clearInputs(); });
+    cancelResetBtn.addEventListener('click', closeResetModal);
+    confirmResetBtn.addEventListener('click', ()=>{ closeResetModal(); clearInputs(); });
+
+    /* ===== Finance helpers ===== */
+    function amortPayment(P, annualRate, years){
+      const r = (annualRate/100)/12, n = Math.max(0, years*12|0);
+      if (n===0) return 0; if (r===0) return P/n;
+      return P * (r*Math.pow(1+r,n)) / (Math.pow(1+r,n)-1);
+    }
+
+    /* ===== Analyzer ===== */
+    function analyze(){
+      const toNum = v => +v || 0;
+      const price = toNum($('price').value);
+      const downPct = toNum($('downPct').value)/100;
+      const closePct = toNum($('closePct').value)/100;
+      const reno = toNum($('reno').value);
+      const units = toNum($('units').value);
+      const sqft = toNum($('sqft').value);
+
+      const loanType = $('loanType').value;
+      const rate = toNum($('rate').value);
+      const years = toNum($('termYears').value);
+      const ioMonths = Math.max(0, toNum($('ioMonths').value)|0);
+
+      const rent = toNum($('rent').value);
+      const otherInc = toNum($('otherInc').value);
+      const vacancy = toNum($('vacancy').value)/100;
+
+      const expModeVal = $('expMode').value;
+      const expRatio = toNum($('expRatio').value)/100;
+      const taxes = toNum($('taxes').value), ins = toNum($('ins').value), utils = toNum($('utils').value), repairs = toNum($('repairs').value), mgmtPct = toNum($('mgmtPct').value)/100, hoa = toNum($('hoa').value);
+
+      const targetDSCR = toNum($('targetDSCR').value);
+      const targetCoC = toNum($('targetCoC').value)/100;
+      const targetLTV = toNum($('targetLTV').value)/100;
+
+      const gRent = toNum($('gRent').value)/100;
+      const gOther = toNum($('gOther').value)/100;
+      const gOpex = toNum($('gOpex').value)/100;
+      const exitCap = Math.max(0.0001, toNum($('exitCap').value)/100);
+
+      const down = price*downPct;
+      const closing = price*closePct;
+      const loan = Math.max(0, price - down);
+      const moDebtAmort = amortPayment(loan, rate, years);
+      const moDebtIO = (rate>0) ? loan*(rate/100)/12 : 0;
+
+      const sgi = rent*12 + otherInc*12;
+      const egi = sgi * (1 - vacancy);
+
+      let opexAnnual;
+      if (expModeVal.startsWith('Ratio')) opexAnnual = egi*expRatio;
+      else { const mgmt = egi*mgmtPct; opexAnnual = (taxes+ins+utils+repairs+hoa)*12 + mgmt; }
+
+      const loanAnnualDebtY1 = (loanType==='Interest Only' && ioMonths>0)
+        ? (moDebtIO*Math.min(12, ioMonths) + moDebtAmort*Math.max(0, 12- Math.min(12, ioMonths)))
+        : (loanType==='Interest Only' ? moDebtIO*12 : moDebtAmort*12);
+
+      const noi = egi - opexAnnual;
+      const annCF = noi - loanAnnualDebtY1;
+
+      const dscr = loanAnnualDebtY1>0 ? (noi/loanAnnualDebtY1) : null;
+      const cap = price>0 ? (noi/price) : null;
+
+      const upfront = down + closing + reno;
+      const coc = upfront>0 ? (annCF/upfront) : null;
+
+      const beOcc = Math.max(0, Math.min(1, (opexAnnual + loanAnnualDebtY1 - (otherInc*12)) / Math.max(1, rent*12)));
+      const ltv = price>0 ? (loan/price) : null;
+      const ltc = (price+reno+closing)>0 ? (loan/(price+reno+closing)) : null;
+      const ppu = (units>0) ? (price/units) : null;
+      const ppsf = (sqft>0) ? (price/sqft) : null;
+
+      // KPIs (Year-1)
+      $('kpiNOI').textContent = money(noi);
+      $('kpiCF').textContent = money(annCF);
+      $('kpiDSCR').textContent = dscr? dscr.toFixed(2) : '—';
+      $('kpiCap').textContent = cap? (cap*100).toFixed(2)+'%' : '—';
+      $('kpiCoC').textContent = coc? (coc*100).toFixed(2)+'%' : '—';
+
+      // Results (Year-1)
+      $('upfront').value = money(upfront);
+      $('loanAmt').value = money(loan);
+      $('moDebt').value = money(loanType==='Amortizing' ? moDebtAmort : moDebtIO);
+      $('annDebt').value = money(loanAnnualDebtY1);
+      $('egi').value = money(egi);
+      $('opex').value = money(opexAnnual);
+      $('noi').value = money(noi);
+      $('annCF').value = money(annCF);
+      $('dscr').value = dscr? dscr.toFixed(2) : '—';
+      $('cap').value = cap? (cap*100).toFixed(2)+'%' : '—';
+      $('coc').value = coc? (coc*100).toFixed(2)+'%' : '—';
+      $('beOcc').value = (beOcc*100).toFixed(1)+'%';
+      $('ltv').value = ltv!=null ? (ltv*100).toFixed(1)+'%' : '—';
+      $('ltc').value = ltc!=null ? (ltc*100).toFixed(1)+'%' : '—';
+      $('ppu').value = ppu!=null ? '$'+ppu.toLocaleString(undefined,{maximumFractionDigits:0}) : '—';
+      $('ppsf').value = ppsf!=null ? '$'+ppsf.toLocaleString(undefined,{maximumFractionDigits:2}) : '—';
+
+      const good = (noi/12 - (loanAnnualDebtY1/12)) >= 0;
+      const dot = $('signalDot'); const txt = $('signalText');
+      dot.className = 'dot ' + (good? 'good' : 'bad');
+      txt.textContent = good ? 'Cash-flow positive' : 'Not cash-flowing';
+
+      const dscrPass = !dscr || dscr >= targetDSCR;
+      const ltvPass = !ltv || ltv <= targetLTV;
+      const allPass = dscrPass && ltvPass && good;
+      $('flagDSCR').textContent = `DSCR ${dscr? dscr.toFixed(2):'—'} • CoC ${coc? (coc*100).toFixed(1)+'%':'—'} • LTV ${ltv? (ltv*100).toFixed(1)+'%':'—'}`;
+      $('flagDSCR').style.color = allPass ? 'var(--good)' : 'var(--bad)';
+
+      // Projection & Value-Add
+      buildProjection({ gRent, gOther, gOpex, rentMo: rent, otherMo: otherInc, vacancy,
+                        expModeVal, expRatio, taxes, ins, utils, repairs, mgmtPct, hoa,
+                        loanType, moDebtAmort, moDebtIO, ioMonths, years, exitCap });
+      runValueAdd({ gRent });
+
+      saveInputs();
+    }
+
+    function buildProjection(ctx){
+      const { gRent, gOther, gOpex, rentMo, otherMo, vacancy,
+              expModeVal, expRatio, taxes, ins, utils, repairs, mgmtPct, hoa,
+              loanType, moDebtAmort, moDebtIO, ioMonths, years, exitCap } = ctx;
+      let ioLeft = (loanType==='Interest Only') ? Math.max(0, ioMonths|0) : 0;
+      const tbody = $('projBody'); tbody.innerHTML = '';
+      for (let y=1; y<=10; y++){
+        const rentY = rentMo * Math.pow(1+gRent, y-1);
+        const otherY = otherMo * Math.pow(1+gOther, y-1);
+        const sgiY = (rentY + otherY) * 12;
+        const egiY = sgiY * (1 - vacancy);
+
+        let opexY;
+        if (expModeVal.startsWith('Ratio')) opexY = egiY * expRatio;
+        else {
+          const fixedBase = (taxes+ins+utils+repairs+hoa)*12;
+          const fixedY = fixedBase * Math.pow(1+gOpex, y-1);
+          const mgmtY = egiY * mgmtPct;
+          opexY = fixedY + mgmtY;
+        }
+
+        const noiY = egiY - opexY;
+        let debtY;
+        if (loanType==='Interest Only'){
+          const ioThisYear = Math.min(12, Math.max(0, ioLeft));
+          debtY = moDebtIO*ioThisYear + moDebtAmort*(12-ioThisYear);
+          ioLeft = Math.max(0, ioLeft-12);
+        } else {
+          debtY = moDebtAmort*12;
+        }
+        const cfY = noiY - debtY;
+        const dscrY = debtY>0 ? (noiY/debtY) : null;
+        const valueY = exitCap>0 ? (noiY/exitCap) : 0;
+
+        const tr = document.createElement('tr');
+        [ y, money0(Math.round(egiY)), money0(Math.round(opexY)), money0(Math.round(noiY)),
+          money0(Math.round(debtY)), money0(Math.round(cfY)), (dscrY? dscrY.toFixed(2):'—'), money0(Math.round(valueY)) ]
+          .forEach((txt)=>{ const td=document.createElement('td'); td.textContent=txt; tr.appendChild(td); });
+        tbody.appendChild(tr);
+      }
+    }
+
+    function runValueAdd({ gRent }){
+      const toNum = v => +v || 0; const units = toNum($('units').value);
+      const vaYears = Math.min(10, Math.max(1, toNum($('vaYears').value) || 1));
+      const vaUnits = toNum($('vaUnits').value) || units;
+      const upliftRent = toNum($('vaRentUplift').value);
+      const upliftOther = toNum($('vaOtherUplift').value);
+      const vaOpexDelta = toNum($('vaOpexDelta').value);
+      const vaCapex = toNum($('vaCapex').value);
+      const vaCap = Math.max(0.0001, toNum($('vaCap').value)/100 || 0.07);
+      const grow = $('vaGrow')?.checked ?? true;
+
+      const upliftBaseMo = vaUnits * (upliftRent + upliftOther);
+      const addedNOI_Mo_Y1 = Math.max(0, upliftBaseMo - vaOpexDelta);
+      const addedNOI_Y1 = addedNOI_Mo_Y1 * 12;
+      const growthFactor = grow ? Math.pow(1+gRent, vaYears-1) : 1;
+      const addedNOI_Target = addedNOI_Y1 * growthFactor;
+
+      const valueAdded = addedNOI_Target / vaCap;
+      const paybackYears = addedNOI_Y1>0 ? (vaCapex / addedNOI_Y1) : Infinity;
+
+      $('vaNOI1').value = money(Math.round(addedNOI_Y1));
+      $('vaNOIN').value = money(Math.round(addedNOI_Target));
+      $('vaValue').value = money(Math.round(valueAdded));
+      $('vaPayback').value = isFinite(paybackYears) ? paybackYears.toFixed(1) : '—';
+    }
+
+    function applyHints(){
+      const type = $('propType').value, lease = $('leaseType').value;
+      if (lease==='NNN'){ if ($('expMode').value.startsWith('Ratio')) $('expRatio').value = 20; $('mgmtPct').value = 5; $('utils').value = 0; }
+      else if (lease==='Modified Gross'){ if ($('expMode').value.startsWith('Ratio')) $('expRatio').value = (type==='Retail'||type==='Office')? 28 : 35; $('mgmtPct').value = 7; }
+      else { if ($('expMode').value.startsWith('Ratio')) $('expRatio').value = (type==='Single-family')? 25 : 40; $('mgmtPct').value = 8; }
+      if (type==='Single-family') $('vacancy').value = 4;
+      if (type==='Multifamily') $('vacancy').value = 6;
+      if (type==='Retail'||type==='Office') $('vacancy').value = 8;
+      if (type==='Industrial') $('vacancy').value = 7;
+    }
+    $('propType').addEventListener('change', applyHints); $('leaseType').addEventListener('change', applyHints);
+
+    /* ===== Init ===== */
+    function init(){
+      loadTheme();
+      const last = localStorage.getItem('kapi.prestige.inputs'); if (last) loadInputs();
+      $('vaUnits').value = $('units').value || 0; applyHints(); analyze();
+      const ids = ['price','rent','otherInc','expRatio','downPct','closePct','reno','rate','termYears','ioMonths','vacancy','taxes','ins','utils','repairs','mgmtPct','hoa','units','sqft','targetDSCR','targetCoC','targetLTV','propType','leaseType','loanType','gRent','gOther','gOpex','exitCap','vaYears','vaUnits','vaRentUplift','vaOtherUplift','vaOpexDelta','vaCapex','vaCap','vaGrow'];
+      document.querySelectorAll('input,select').forEach(el=>{ el.addEventListener('change', e=>{ if (ids.includes(e.target.id)) analyze(); }); });
+      $('btnExport').addEventListener('click', () => window.exportPDF?.());
+    }
+    init();
+
+  // Build a compact payload from current inputs (rely on your existing ids)
+  (function wireUW(){
+    const IDS = ['propType','leaseType','units','sqft','price','downPct','closePct','reno','rent','otherInc','vacancy','expMode','expRatio','taxes','ins','utils','repairs','mgmtPct','hoa','loanType','rate','termYears','ioMonths','targetDSCR','targetCoC','targetLTV','gRent','gOther','gOpex','exitCap'];
+    const $ = id => document.getElementById(id);
+    const val = id => $(id)?.value ?? '';
+    function payload(){
+      // make sure latest numbers are computed
+      try{ analyze(); }catch{}
+      const data = {};
+      IDS.forEach(id => data[id] = val(id));
+      return data;
+    }
+    function encodeDeal(obj){ const json = JSON.stringify(obj); return btoa(unescape(encodeURIComponent(json))); }
+
+    document.getElementById('openUW')?.addEventListener('click', () => {
+      const deal = payload();
+      // keep a local fallback so Underwriter can load even without URL param
+      localStorage.setItem('kapi.uw.lastDeal', JSON.stringify(deal));
+      const url = `underwriter.html?deal=${encodeDeal(deal)}`;
+      window.open(url, '_blank'); // new tab with the preloaded deal
+    });
+  })();
+</script>
+
+  </script>
+
+  <!-- jsPDF core + AutoTable -->
+  <script src="https://cdn.jsdelivr.net/npm/jspdf@2.5.1/dist/jspdf.umd.min.js" crossorigin="anonymous"></script>
+  <script src="https://cdn.jsdelivr.net/npm/jspdf-autotable@3.5.28/dist/jspdf.plugin.autotable.min.js" crossorigin="anonymous"></script>
+
+  <!-- (Optional) Auth0 if your app requires login gate for this page -->
+  <script src="https://cdn.auth0.com/js/auth0-spa-js/2.5/auth0-spa-js.production.js"></script>
+  <script src="/auth0-config.js"></script>
+  <script src="/auth0-client.js"></script>
+<script>
+
+
+  document.getElementById('btnExport')?.addEventListener('click', exportPDF);
+
+</script>
+
+  <!-- PDF Export helpers + single exporter -->
+  <script>
+    // Load a script tag and await it
+    function loadScript(src) {
+      return new Promise((resolve, reject) => {
+        const s = document.createElement('script');
+        s.src = src; s.defer = true; s.onload = resolve; s.onerror = () => reject(new Error('Failed to load '+src));
+        document.head.appendChild(s);
+      });
+    }
+    // Ensure jsPDF + AutoTable exist; load if missing
+    async function ensurePDFLibs() {
+      if (!window.jspdf || !window.jspdf.jsPDF) {
+        await loadScript('https://cdn.jsdelivr.net/npm/jspdf@2.5.1/dist/jspdf.umd.min.js');
+      }
+      const { jsPDF } = window.jspdf || {};
+      if (!jsPDF) { alert('Missing jsPDF. Check the CDN connectivity.'); return null; }
+      if (!jsPDF.API?.autoTable) {
+        await loadScript('https://cdn.jsdelivr.net/npm/jspdf-autotable@3.5.28/dist/jspdf.plugin.autotable.min.js');
+      }
+      const probe = new jsPDF();
+      if (typeof probe.autoTable !== 'function') { alert('Missing jsPDF-AutoTable. Check the plugin script or network.'); return null; }
+      return jsPDF;
+    }
+
+    // Lender PDF Export (stylized)
+    window.exportPDF = async function exportPDF(){
+      const jsPDF = await ensurePDFLibs();
+      if (!jsPDF) return;
+      // Make sure latest numbers are on the page
+      if (typeof analyze === 'function') { try { analyze(); } catch(_){} }
+
+      const { jsPDF: Klass } = window.jspdf;
+      const doc = new Klass({ unit: 'pt', format: 'a4' });
+      const brand = { r:33, g:193, b:122 };
+      const page = { w: doc.internal.pageSize.getWidth(), h: doc.internal.pageSize.getHeight() };
+      const now = new Date();
+      const numify = (v) => { const s = String(v??'').replace(/[\s,$%]/g,''); const n = parseFloat(s); return isNaN(n)?0:n; };
+      const readVal = (id) => { const el = document.getElementById(id); return !el ? "" : ('value' in el ? el.value : (el.textContent||'').trim()); };
+      const readNum = (id) => numify(readVal(id));
+      const fmtUSD = (n) => isFinite(n) ? n.toLocaleString(undefined,{style:'currency',currency:'USD',maximumFractionDigits:0}) : '—';
+
+      const data = {
+        propType: readVal('propType')||'—', leaseType: readVal('leaseType')||'—',
+        units: readNum('units'), sqft: readNum('sqft'), price: readNum('price'),
+        downPct: readNum('downPct'), closePct: readNum('closePct'), reno: readNum('reno'),
+        rent: readNum('rent'), otherInc: readNum('otherInc'), vacancy: readNum('vacancy'),
+        expMode: readVal('expMode')||'—', expRatio: readNum('expRatio'),
+        taxes: readNum('taxes'), ins: readNum('ins'), utils: readNum('utils'), repairs: readNum('repairs'),
+        mgmtPct: readNum('mgmtPct'), hoa: readNum('hoa'), loanType: readVal('loanType')||'—',
+        rate: readNum('rate'), termYears: readNum('termYears'), ioMonths: readNum('ioMonths'),
+        gRent: readNum('gRent'), gOther: readNum('gOther'), gOpex: readNum('gOpex'), exitCap: readNum('exitCap'),
+        targetDSCR: readNum('targetDSCR'), targetLTV: readNum('targetLTV'), targetCoC: readNum('targetCoC'),
+        upfront: readNum('upfront'), loanAmt: readNum('loanAmt'),
+        moDebt: readNum('moDebt'), annDebt: readNum('annDebt'),
+        egi: readNum('egi'), opex: readNum('opex'), noi: readNum('noi'),
+        annCF: readNum('annCF'), dscr: readNum('dscr'), cap: readNum('cap'), coc: readNum('coc'),
+        beOcc: readNum('beOcc'), ltv: readNum('ltv'), ltc: readNum('ltc'), ppu: readNum('ppu'), ppsf: readNum('ppsf')
+      };
+
+      const projection = [];
+      (function readProjection(){
+        const tbody = document.getElementById('projBody');
+        if (!tbody) return;
+        tbody.querySelectorAll('tr').forEach(tr=>{
+          const tds = Array.from(tr.children).map(td=>td.textContent.trim());
+          projection.push({
+            year: numify(tds[0]), egi: numify(tds[1]), opex: numify(tds[2]), noi: numify(tds[3]),
+            debt: numify(tds[4]), cf: numify(tds[5]), dscr: numify(tds[6]), value: numify(tds[7]||0)
+          });
+        });
+      })();
+
+      function headerFooterHook(){
+        doc.setFillColor(brand.r, brand.g, brand.b); doc.rect(0,0,page.w,56,'F');
+        doc.setTextColor(255); doc.setFont('helvetica','bold'); doc.setFontSize(14);
+        doc.text('Kapi — Commercial Loan Underwriting Summary', 40, 34);
+        doc.setTextColor(140); doc.setFont('helvetica','normal'); doc.setFontSize(9);
+        const p = doc.internal.getNumberOfPages(); doc.text(`Generated ${now.toLocaleString()} • Page ${p}`, 40, page.h-18);
+      }
+      function title(text, y){ doc.setTextColor(40); doc.setFont('helvetica','bold'); doc.setFontSize(12); doc.text(text, 40, y);
+        doc.setDrawColor(33,193,122); doc.setLineWidth(1); doc.line(40, y+6, 200, y+6); }
+      function roundedRect(x,y,w,h,r=6, mode='S'){ doc.roundedRect(x,y,w,h,r,r,mode); }
+      function covenantPill(x,y,label,pass){
+        const w=110,h=22; doc.setLineWidth(1);
+        doc.setDrawColor(pass? 33:200, pass? 193:60, pass? 122:80);
+        doc.setFillColor(pass?235:255, pass?250:240, pass?245:240);
+        roundedRect(x,y,w,h,6,'FD');
+        doc.setFont('helvetica','bold'); doc.setFontSize(10); doc.setTextColor(60); doc.text(label, x+10, y+14);
+        doc.setTextColor(pass? 33:180, pass? 193:60, pass? 122:60); doc.text(pass?'PASS':'CHECK', x+w-44, y+14);
+      }
+
+      function drawSparklineNOIvsDebt(x,y){
+        if (!projection.length) return;
+        const w=500,h=140,pad=20;
+        const canvas = document.createElement('canvas'); canvas.width=w; canvas.height=h;
+        const ctx = canvas.getContext('2d'); ctx.fillStyle='#0f1319'; ctx.fillRect(0,0,w,h);
+        ctx.strokeStyle='rgba(255,255,255,0.15)'; ctx.beginPath();
+        ctx.moveTo(pad,h-pad); ctx.lineTo(w-pad,h-pad); ctx.moveTo(pad,pad); ctx.lineTo(pad,h-pad); ctx.stroke();
+        const maxY = Math.max(...projection.map(p=>p.noi||0), ...projection.map(p=>p.debt||0)) * 1.1 || 1;
+        function lineFor(key,color){
+          ctx.strokeStyle=color; ctx.lineWidth=2; ctx.beginPath();
+          projection.forEach((row,i)=>{
+            const xi = pad + i*((w-2*pad)/Math.max(1,(projection.length-1)));
+            const yi = h - pad - ((row[key]||0)/maxY)*(h-2*pad);
+            if (i===0) ctx.moveTo(xi,yi); else ctx.lineTo(xi,yi);
+          }); ctx.stroke();
+        }
+        lineFor('noi','rgba(33,193,122,1)'); lineFor('debt','rgba(180,190,200,0.9)');
+        ctx.fillStyle='rgba(255,255,255,0.85)'; ctx.font='12px system-ui, -apple-system, Segoe UI, Roboto, Helvetica, Arial, sans-serif';
+        ctx.fillText('NOI', pad+10, pad+12); ctx.fillText('Debt', pad+50, pad+12);
+        const img = canvas.toDataURL('image/png'); doc.addImage(img,'PNG',x,y,w,h);
+      }
+
+      headerFooterHook();
+
+      // Deal Snapshot
+      title('Deal Snapshot', 80);
+      doc.autoTable({
+        startY: 95, theme: 'plain',
+        styles:{ fontSize:10, cellPadding:3, textColor:40 },
+        columnStyles:{ 0:{ fontStyle:'bold', cellWidth:170 }, 1:{ cellWidth:210 } },
+        body: [
+          ['Property Type', data.propType],
+          ['Lease Type', data.leaseType],
+          ['Units', data.units || '—'],
+          ['Square Footage', data.sqft ? data.sqft.toLocaleString() : '—'],
+          ['Purchase Price', fmtUSD(data.price)],
+          ['Loan Amount', fmtUSD(data.loanAmt)],
+          ['All-In Cash at Close', fmtUSD(data.upfront)],
+          ['Interest Rate (APR)', isFinite(data.rate)? (data.rate.toFixed(2)+'%') : '—'],
+          ['Amort/Term', data.termYears ? (data.termYears.toFixed(0)+' yrs') : '—'],
+          ['I/O Period', data.ioMonths ? (data.ioMonths.toFixed(0)+' mo') : '—'],
+        ]
+      });
+
+      // Covenants
+      const dscrPass = data.targetDSCR ? data.dscr >= data.targetDSCR : (data.dscr >= 1.20);
+      const ltvPass  = data.targetLTV  ? data.ltv <= data.targetLTV   : (data.ltv <= 80);
+      const ltcPass  = isFinite(data.ltc) ? data.ltc <= 80 : true;
+      covenantPill(430, 95,  `DSCR ${data.dscr ? data.dscr.toFixed(2):'—'}×`, dscrPass);
+      covenantPill(430, 125, `LTV ${isFinite(data.ltv)? data.ltv.toFixed(1):'—'}%`, ltvPass);
+      covenantPill(430, 155, `LTC ${isFinite(data.ltc)? data.ltc.toFixed(1):'—'}%`, ltcPass);
+
+      // Sparkline
+      drawSparklineNOIvsDebt(430, 190);
+
+      // Year-1 Results
+      title('Calculated Results (Year-1)', 350);
+      doc.autoTable({
+        startY: 365,
+        head: [['Metric','Value','Why it matters']],
+        body: [
+          ['NOI', fmtUSD(data.noi), 'Primary income available for debt service'],
+          ['Annual Debt Service', fmtUSD(data.annDebt), 'Denominator in DSCR'],
+          ['DSCR', data.dscr ? data.dscr.toFixed(2)+'×' : '—', 'Coverage of debt service (min often ≥ 1.20×)'],
+          ['Effective Gross Income (EGI)', fmtUSD(data.egi), 'Income after vacancy; basis for NOI'],
+          ['Operating Expenses', fmtUSD(data.opex), 'Directly reduces NOI & DSCR'],
+          ['Cash Flow (after debt)', fmtUSD(data.annCF), 'Residual cash; cushion for shocks'],
+          ['Break-even Occupancy', isFinite(data.beOcc)? data.beOcc.toFixed(1)+'%':'—', 'Occupancy to cover opex + debt'],
+          ['Cap Rate', isFinite(data.cap)? data.cap.toFixed(2)+'%':'—', 'Market yield indicator'],
+          ['Price / Unit', isFinite(data.ppu)? fmtUSD(data.ppu):'—', 'Comparable valuation'],
+          ['Price / SF', isFinite(data.ppsf)? fmtUSD(data.ppsf):'—', 'Comparable valuation'],
+        ],
+        styles:{ fontSize:10 }, headStyles:{ fillColor:[12,17,23], textColor:255, halign:'left' },
+        columnStyles:{ 0:{cellWidth:180}, 1:{cellWidth:120}, 2:{cellWidth:230} },
+        alternateRowStyles:{ fillColor:[245,247,250] }
+      });
+
+      let y = (doc.lastAutoTable ? doc.lastAutoTable.finalY : 720);
+      if (y > page.h - 240) { doc.addPage(); headerFooterHook(); y = 80; }
+
+      // Borrower Inputs
+      title('Deal Inputs (Borrower Provided)', y+20);
+      doc.autoTable({
+        startY: y+35,
+        head: [['Section','Field','Value']],
+        body: [
+          ['Basics','Property type', data.propType],
+          ['Basics','Lease type', data.leaseType],
+          ['Basics','Units', data.units || '—'],
+          ['Basics','Square Footage', data.sqft? data.sqft.toLocaleString() : '—'],
+          ['Basics','Purchase price', fmtUSD(data.price)],
+          ['Financing','Loan type', data.loanType],
+          ['Financing','Interest rate (APR)', isFinite(data.rate)? data.rate.toFixed(2)+'%':'—'],
+          ['Financing','Term (years)', data.termYears || '—'],
+          ['Financing','I/O period (months)', data.ioMonths || '—'],
+          ['Financing','Down payment (%)', isFinite(data.downPct)? data.downPct.toFixed(1)+'%':'—'],
+          ['Transaction','Closing costs (%)', isFinite(data.closePct)? data.closePct.toFixed(1)+'%':'—'],
+          ['Transaction','Upfront CapEx', fmtUSD(data.reno)],
+          ['Income','Monthly rent', fmtUSD(data.rent)],
+          ['Income','Other income / mo', fmtUSD(data.otherInc)],
+          ['Income','Vacancy (%)', isFinite(data.vacancy)? data.vacancy.toFixed(1)+'%':'—'],
+          ['Expenses','Mode', data.expMode],
+          ['Expenses','Expense ratio (%)', isFinite(data.expRatio)? data.expRatio.toFixed(1)+'%':'—'],
+          ['Expenses','Taxes / mo', fmtUSD(data.taxes)],
+          ['Expenses','Insurance / mo', fmtUSD(data.ins)],
+          ['Expenses','Utilities / mo', fmtUSD(data.utils)],
+          ['Expenses','Repairs/CapEx / mo', fmtUSD(data.repairs)],
+          ['Expenses','Mgmt fee (% EGI)', isFinite(data.mgmtPct)? data.mgmtPct.toFixed(1)+'%':'—'],
+          ['Expenses','HOA/Other / mo', fmtUSD(data.hoa)],
+          ['Assumptions','Rent growth / yr', isFinite(data.gRent)? data.gRent.toFixed(1)+'%':'—'],
+          ['Assumptions','Other income growth / yr', isFinite(data.gOther)? data.gOther.toFixed(1)+'%':'—'],
+          ['Assumptions','Opex growth / yr', isFinite(data.gOpex)? data.gOpex.toFixed(1)+'%':'—'],
+          ['Assumptions','Exit cap rate', isFinite(data.exitCap)? data.exitCap.toFixed(2)+'%':'—'],
+          ['Targets','Min DSCR', data.targetDSCR ? data.targetDSCR.toFixed(2)+'×' : '—'],
+          ['Targets','Max LTV', isFinite(data.targetLTV)? data.targetLTV.toFixed(1)+'%':'—'],
+          ['Targets','Min CoC', isFinite(data.targetCoC)? data.targetCoC.toFixed(1)+'%':'—'],
+        ],
+        styles:{ fontSize:9 }, headStyles:{ fillColor:[12,17,23], textColor:255 },
+        columnStyles:{ 0:{ cellWidth:100 }, 1:{ cellWidth:170 }, 2:{ cellWidth:280 } },
+        alternateRowStyles:{ fillColor:[245,247,250] }
+      });
+
+      // Projection
+      if (projection.length){
+        if (doc.lastAutoTable.finalY > page.h - 220) { doc.addPage(); headerFooterHook(); }
+        title('10-Year Projection', (doc.lastAutoTable.finalY || 80)+20);
+        const projBody = projection.map(r=>[
+          r.year || '',
+          fmtUSD(r.egi), fmtUSD(r.opex), fmtUSD(r.noi), fmtUSD(r.debt),
+          fmtUSD(r.cf), (isFinite(r.dscr)? r.dscr.toFixed(2)+'×':'—'),
+          r.value ? fmtUSD(r.value) : '—'
+        ]);
+        doc.autoTable({
+          startY: (doc.lastAutoTable.finalY || 100)+35,
+          head: [['Year','EGI','Opex','NOI','Debt','CF','DSCR','Value @ Exit Cap']],
+          body: projBody,
+          styles:{ fontSize:9 }, headStyles:{ fillColor:[12,17,23], textColor:255 },
+          alternateRowStyles:{ fillColor:[245,247,250] }
+        });
+      }
+
+      // Disclaimer
+      const endY = doc.lastAutoTable ? doc.lastAutoTable.finalY : 740;
+      if (endY > page.h - 100) { doc.addPage(); headerFooterHook(); }
+      doc.setFont('helvetica','normal'); doc.setFontSize(8); doc.setTextColor(120);
+      const disclaimer = "Notes: Figures are estimates based on borrower-provided inputs and market assumptions. Lenders may apply their own underwriting standards (vacancy, expenses, reserves, rate, DSCR/LTV tests) which can materially change the outcome.";
+      doc.text(disclaimer, 40, Math.min(endY+30, page.h-60), { maxWidth: page.w-80 });
+
+      const stamp = `${now.getFullYear()}${String(now.getMonth()+1).padStart(2,'0')}${String(now.getDate()).padStart(2,'0')}_${String(now.getHours()).padStart(2,'0')}${String(now.getMinutes()).padStart(2,'0')}`;
+      doc.save(`Kapi_Underwriting_${stamp}.pdf`);
+
+    };
+
+
