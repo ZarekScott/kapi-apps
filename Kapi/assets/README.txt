@@ -1,1 +1,0 @@
-Place your logos and icons here (e.g., kapi_icon.svg).
